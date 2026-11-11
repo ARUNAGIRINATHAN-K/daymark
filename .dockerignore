@@ -1,0 +1,16 @@
+.git
+.gitignore
+.aws
+.codex
+.agents
+.env*
+!.env.example
+.npmrc
+.bunfig.toml
+node_modules
+dist
+build
+coverage
+test-results
+playwright-report
+*.log

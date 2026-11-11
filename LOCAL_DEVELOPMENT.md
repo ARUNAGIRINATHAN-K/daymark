@@ -16,6 +16,8 @@ bun run test:e2e
 
 The dev server uses port 3000. `lint` runs `tsc --noEmit`; `test` runs Vitest; `build` writes the production app to `dist/`; `preview` serves that build. The Playwright suite expects a fresh production build and serves `dist/` on port 4173. Run `bunx playwright install chromium` once per machine before the browser suite.
 
+Docker is optional. With Docker Compose v2, run `docker compose --profile dev up --build daymark-dev` for the containerized Vite server on port 3000, or `docker compose up --build -d` for the Nginx production preview on port 8080. See [Docker setup](DOCKER.md).
+
 Vitest coverage lives in `tests/` and uses `fake-indexeddb` for persistence scenarios. Browser scenarios are in `tests/e2e/` and use Chromium at desktop (1440×960) and mobile (390×844) viewports. Tests can seed a new database with demo content; browser contexts are isolated from a user's ordinary browser profile.
 
 ## Data development rules

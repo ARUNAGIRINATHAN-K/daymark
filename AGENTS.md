@@ -38,7 +38,10 @@ The React entry point is `src/main.tsx`. `src/App.tsx` declares React Router rou
 
 ```text
 .
-|-- docs/                 # Project, architecture, schema, status, roadmap, Codex docs
+|-- *.md                  # README, architecture, schema, status, user/developer guides
+|-- Dockerfile            # Bun build stages and static Nginx production image
+|-- compose.yaml          # Local production and optional development services
+|-- nginx.conf            # SPA fallback and PWA/static asset cache headers
 |-- public/               # PWA icons/assets and offline.html
 |-- src/
 |   |-- components/       # Layout, navigation, notes, tasks, editor, dialogs, PWA, outbox, settings, sync conflicts
@@ -97,7 +100,15 @@ Existing code has direct database reads in some pages/hooks. Treat that as a kno
 - `PWAUpdatePrompt` uses `useRegisterSW` and is mounted through the application layout. Preserve update behavior when changing app-shell caching.
 - Workbox uses `index.html` as `navigateFallback`, precaches configured build assets, and has CacheFirst rules for Google font hosts. `public/offline.html` is present but is **not** configured as the navigation fallback; do not document or depend on it as such without changing and verifying the configuration.
 - Keep all app-shell assets required for a warm-cache offline relaunch in the precache strategy. External fonts may be unavailable offline until cached.
-- Verify service-worker registration, installation, updates, and offline relaunch in a browser for PWA changes. Existing config tests only inspect static configuration and assets; they are not a substitute for runtime verification.
+- Verify service-worker registration, installation, updates, and offline relaunch in a browser for PWA changes. Playwright currently checks manifest/icons, active service worker, cached assets, and warm-cache offline relaunch; it does not verify native install UX or update activation.
+
+## Docker conventions
+
+- The production image builds static Vite assets from `bun.lock` using frozen installation and serves them with Nginx. Keep the `/` base path, SPA fallback, PWA service-worker scope, and no-cache headers for `sw.js` and the manifest aligned.
+- The default Compose service binds to `127.0.0.1:8080`; the optional `dev` profile binds Vite to `127.0.0.1:3000` and mounts source code with a Linux dependency volume.
+- Daymark data belongs to browser IndexedDB, not the container filesystem. Do not add a Docker database volume or claim that containers preserve/synchronize user records.
+- Keep `.dockerignore` excluding local dependencies, build artifacts, test outputs, and environment secrets. Do not copy `.env` files or credentials into image layers.
+- Docker/Compose were not available in the Phase 11 execution environment. Run `docker compose config`, build and start the image, then verify the served app in a browser whenever Docker files change. Report when these checks cannot run.
 
 ## 8. TypeScript coding standards
 
@@ -136,7 +147,7 @@ Existing code has direct database reads in some pages/hooks. Treat that as a kno
 - For a schema change, add a higher Dexie version with a complete `.stores()` declaration and a deliberate upgrade callback where data needs transformation.
 - Migrations must be additive and preserve existing entity records and pending local operations. Do not rename/remove fields, stores, or indexes without explicit approval and a reviewed migration/recovery plan.
 - Test migration behavior against both a populated database and pending outbox data before shipping.
-- Keep `src/types/`, Zod schemas, database indexes, service behavior, tests, and `docs/DATABASE_SCHEMA.md` aligned. Treat migrations as data-sensitive changes.
+- Keep `src/types/`, Zod schemas, database indexes, service behavior, tests, and root `DATABASE_SCHEMA.md` aligned. Treat migrations as data-sensitive changes.
 
 ## 13. Prohibited architectural changes
 
@@ -161,6 +172,9 @@ bun run test        # vitest run
 bun run test:e2e    # Playwright against local production preview
 bun run dev         # Vite dev server on port 3000
 bunx playwright install chromium
+docker compose config
+docker compose build
+docker compose up --build -d
 ```
 
 Use the checked-in Bun lockfile and frozen install for reproducible dependencies. Do not replace it with an npm lockfile. Run lint, build, and relevant tests for code changes when dependencies are available. Record exact failures and do not claim successful verification when local executables are missing. PWA/offline changes also require browser verification; the current Playwright checks cover warm-cache relaunch but do not prove install UX or update activation.
@@ -169,5 +183,5 @@ Use the checked-in Bun lockfile and frozen install for reproducible dependencies
 
 - Update the relevant docs whenever an approved change affects architecture, data contracts, schema/migrations, offline/PWA behavior, feature status, or development commands.
 - Keep documentation factual and distinguish implementation from UI-only, planned, or runtime-unverified behavior.
-- Current project documentation is in `docs/`: `PROJECT_OVERVIEW.md`, `ARCHITECTURE.md`, `DATABASE_SCHEMA.md`, `IMPLEMENTATION_STATUS.md`, `DEVELOPMENT_ROADMAP.md`, and `CODEX_RULES.md`.
+- Project documentation is maintained as root-level Markdown files: `PROJECT_OVERVIEW.md`, `ARCHITECTURE.md`, `DATABASE_SCHEMA.md`, `IMPLEMENTATION_STATUS.md`, `DEVELOPMENT_ROADMAP.md`, `CODEX_RULES.md`, `INSTALLATION.md`, `LOCAL_DEVELOPMENT.md`, `OFFLINE_TESTING.md`, `BACKUP_RESTORE.md`, `KNOWN_LIMITATIONS.md`, `PRODUCTION_DEPLOYMENT.md`, and `DOCKER.md`.
 - Update this `AGENTS.md` when its instructions or the verified architecture change.

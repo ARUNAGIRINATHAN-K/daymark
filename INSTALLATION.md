@@ -22,6 +22,8 @@ bunx playwright install chromium
 
 No API key, server, account, or network service is needed for local note/task use. No `.env.local` file is required by the current app.
 
+Alternatively, run the production-style local container with Docker Engine and Compose v2 using `docker compose up --build -d`, then open `http://localhost:8080`. See [Docker setup](DOCKER.md). Docker serves the app but does not store browser IndexedDB records.
+
 ## Start the app
 
 ```powershell

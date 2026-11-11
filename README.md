@@ -19,7 +19,11 @@ bun run dev
 
 Open `http://localhost:3000`. The repository is a static Vite application and does not require a Gemini API key or a backend for its local features.
 
-See [installation](docs/INSTALLATION.md), [local development](docs/LOCAL_DEVELOPMENT.md), and [production deployment](docs/PRODUCTION_DEPLOYMENT.md) for full steps.
+See [installation](INSTALLATION.md), [local development](LOCAL_DEVELOPMENT.md), and [production deployment](PRODUCTION_DEPLOYMENT.md) for full steps.
+
+## Docker
+
+For a production-style local container, run `docker compose up --build -d` and open `http://localhost:8080`. For the Vite development server, run `docker compose --profile dev up --build daymark-dev` and open `http://localhost:3000`. See [Docker setup](DOCKER.md).
 
 ## Verification
 
@@ -34,13 +38,19 @@ Install the Playwright browser once with `bunx playwright install chromium`. Pla
 
 ## Data and backups
 
-Entity records are stored in the browser database `DaymarkDB`. Use Settings → Backup & Restore to export or preview an additive restore. The version 1 JSON backup includes notes, tasks, folders, tags, allowlisted preferences, and unsynced portable outbox operations. Restore requires an explicit choice for each existing ID and does not erase unrelated local data. See [backup and restore](docs/BACKUP_RESTORE.md).
+Entity records are stored in the browser database `DaymarkDB`. Use Settings → Backup & Restore to export or preview an additive restore. The version 1 JSON backup includes notes, tasks, folders, tags, allowlisted preferences, and unsynced portable outbox operations. Restore requires an explicit choice for each existing ID and does not erase unrelated local data. See [backup and restore](BACKUP_RESTORE.md).
 
 ## Project documentation
 
 - [AGENTS.md](AGENTS.md)
 - [Architecture](ARCHITECTURE.md)
 - [Database schema](DATABASE_SCHEMA.md)
+- [Docker setup](DOCKER.md)
+- [Installation](INSTALLATION.md)
+- [Local development](LOCAL_DEVELOPMENT.md)
 - [Offline testing](OFFLINE_TESTING.md)
+- [Backup and restore](BACKUP_RESTORE.md)
 - [Known limitations](KNOWN_LIMITATIONS.md)
+- [Production deployment](PRODUCTION_DEPLOYMENT.md)
+- [Development roadmap](DEVELOPMENT_ROADMAP.md)
 - [Codex rules](CODEX_RULES.md)

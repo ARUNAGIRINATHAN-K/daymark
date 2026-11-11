@@ -13,6 +13,10 @@ bun run build
 
 Publish the contents of `dist/` at the application's configured base path. The current Vite and PWA configuration assumes the site is mounted at `/`; a subpath deployment requires coordinated Vite base, manifest, service-worker scope, and router changes, followed by browser verification.
 
+## Docker option
+
+The root `Dockerfile`, `compose.yaml`, and `nginx.conf` provide a multi-stage static production image. Run `docker compose up --build -d` and browse to `http://localhost:8080` for a local production-style check. The service binds to loopback. Use an HTTPS-capable reverse proxy for an externally reachable production deployment. See [Docker setup](DOCKER.md) for the optional Vite development container and browser-origin data behavior.
+
 ## Hosting requirements
 
 - Serve `index.html` as the SPA fallback for application routes such as `/notes` and `/tasks`.
