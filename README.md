@@ -125,4 +125,5 @@ bun run build
 ## Documentation
 
 - [ARCHITECTURE.md](ARCHITECTURE.md): database stores, contracts, lifecycle state, sync design, and migrations
+- [CONTRIBUTING.md](CONTRIBUTING.md): contribution guidelines, architectural rules, and ideas roadmap
 - [AGENTS.md](AGENTS.md): coding conventions and constraints for AI assistants
