@@ -1,0 +1,8 @@
+{
+  "name": "Daymark",
+  "description": "An offline-first, installable productivity application for notes and task management powered by Dexie.js IndexedDB and transactional outbox sync.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
