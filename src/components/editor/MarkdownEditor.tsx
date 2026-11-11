@@ -172,18 +172,18 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ note }) => {
   };
 
   return (
-    <div className="flex h-full flex-col bg-white dark:bg-slate-950">
+    <div className="flex h-full flex-col bg-[var(--color-bg-primary)] text-[var(--color-text-primary)]">
       {/* Top Header Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-6 py-3 dark:border-slate-800">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-border-primary)] bg-[var(--color-bg-card)] px-6 py-2.5">
         {/* Folder & Tag selector strip */}
         <div className="flex flex-wrap items-center gap-2 text-xs">
           {/* Folder dropdown */}
-          <div className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
-            <Folder className="h-3.5 w-3.5 text-indigo-500" />
+          <div className="flex items-center gap-1.5 rounded-lg border border-[var(--color-border-primary)] bg-[var(--color-bg-secondary)] px-2.5 py-1 text-[var(--color-text-secondary)]">
+            <Folder className="h-3.5 w-3.5 text-[var(--color-accent)]" />
             <select
               value={note.folderId || ''}
               onChange={(e) => handleFolderChange(e.target.value || null)}
-              className="bg-transparent text-xs outline-none cursor-pointer"
+              className="bg-transparent text-xs text-[var(--color-text-primary)] outline-none cursor-pointer"
             >
               <option value="" className="dark:bg-slate-900">Uncategorized</option>
               {folders.map((f) => (
@@ -203,10 +203,10 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ note }) => {
                   key={t.id}
                   type="button"
                   onClick={() => handleToggleTag(t.id)}
-                  className={`rounded-md px-2 py-0.5 text-[11px] font-medium transition ${
+                  className={`rounded-md px-2 py-0.5 text-xs font-medium transition ${
                     active
-                      ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300'
-                      : 'text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900'
+                      ? 'bg-[var(--color-accent-subtle)] text-[var(--color-accent)]'
+                      : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg-secondary)] hover:text-[var(--color-text-primary)]'
                   }`}
                 >
                   #{t.name}
@@ -217,15 +217,15 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ note }) => {
         </div>
 
         {/* View Mode controls & Note Actions */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           {/* Mode switch */}
-          <div className="flex items-center rounded-lg border border-slate-200 bg-slate-100/70 p-0.5 dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex items-center rounded-lg border border-[var(--color-border-primary)] bg-[var(--color-bg-secondary)] p-0.5">
             <button
               onClick={() => setEditorMode('editor')}
               className={`rounded px-2.5 py-1 text-xs font-medium transition ${
                 editorMode === 'editor'
-                  ? 'bg-white text-slate-900 shadow-xs dark:bg-slate-800 dark:text-white'
-                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                  ? 'bg-[var(--color-bg-card)] text-[var(--color-text-primary)] shadow-2xs font-semibold'
+                  : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
               }`}
               title="Editor only"
             >
@@ -235,8 +235,8 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ note }) => {
               onClick={() => setEditorMode('split')}
               className={`hidden md:block rounded px-2.5 py-1 text-xs font-medium transition ${
                 editorMode === 'split'
-                  ? 'bg-white text-slate-900 shadow-xs dark:bg-slate-800 dark:text-white'
-                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                  ? 'bg-[var(--color-bg-card)] text-[var(--color-text-primary)] shadow-2xs font-semibold'
+                  : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
               }`}
               title="Split view"
             >
@@ -246,8 +246,8 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ note }) => {
               onClick={() => setEditorMode('preview')}
               className={`rounded px-2.5 py-1 text-xs font-medium transition ${
                 editorMode === 'preview'
-                  ? 'bg-white text-slate-900 shadow-xs dark:bg-slate-800 dark:text-white'
-                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                  ? 'bg-[var(--color-bg-card)] text-[var(--color-text-primary)] shadow-2xs font-semibold'
+                  : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
               }`}
               title="Preview only"
             >
@@ -255,7 +255,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ note }) => {
             </button>
           </div>
 
-          <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 mx-1" />
+          <div className="h-4 w-px bg-[var(--color-border-primary)] mx-0.5" />
 
           {/* Action buttons */}
           <button
@@ -263,7 +263,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ note }) => {
             className={`rounded-lg p-1.5 transition ${
               note.isPinned
                 ? 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400'
-                : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-900 dark:hover:text-slate-300'
+                : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg-secondary)] hover:text-[var(--color-text-primary)]'
             }`}
             title={note.isPinned ? 'Unpin note' : 'Pin note to top'}
           >
@@ -274,8 +274,8 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ note }) => {
             onClick={handleToggleArchive}
             className={`rounded-lg p-1.5 transition ${
               note.isArchived
-                ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400'
-                : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-900 dark:hover:text-slate-300'
+                ? 'bg-[var(--color-accent-subtle)] text-[var(--color-accent)]'
+                : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg-secondary)] hover:text-[var(--color-text-primary)]'
             }`}
             title={note.isArchived ? 'Unarchive note' : 'Archive note'}
           >
@@ -284,7 +284,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ note }) => {
 
           <button
             onClick={handleDelete}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400"
+            className="rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400"
             title="Delete note"
           >
             <Trash2 className="h-4 w-4" />
@@ -294,11 +294,11 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ note }) => {
 
       {/* Markdown Toolbar (visible when writing) */}
       {editorMode !== 'preview' && (
-        <div className="flex flex-wrap items-center gap-1 border-b border-slate-100 bg-slate-50/70 px-6 py-2 text-slate-600 dark:border-slate-800/80 dark:bg-slate-950/50 dark:text-slate-400">
+        <div className="flex flex-wrap items-center gap-1 border-b border-[var(--color-border-secondary)] bg-[var(--color-bg-secondary)] px-6 py-1.5 text-[var(--color-text-secondary)]">
           <button
             type="button"
             onClick={() => insertFormatting('**', '**', 'bold text')}
-            className="rounded p-1 hover:bg-slate-200/80 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+            className="rounded p-1 hover:bg-[var(--color-bg-card)] hover:text-[var(--color-text-primary)] transition"
             title="Bold"
           >
             <Bold className="h-3.5 w-3.5" />
@@ -306,16 +306,16 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ note }) => {
           <button
             type="button"
             onClick={() => insertFormatting('*', '*', 'italic text')}
-            className="rounded p-1 hover:bg-slate-200/80 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+            className="rounded p-1 hover:bg-[var(--color-bg-card)] hover:text-[var(--color-text-primary)] transition"
             title="Italic"
           >
             <Italic className="h-3.5 w-3.5" />
           </button>
-          <span className="mx-1 h-3.5 w-px bg-slate-200 dark:bg-slate-800" />
+          <span className="mx-1 h-3.5 w-px bg-[var(--color-border-primary)]" />
           <button
             type="button"
             onClick={() => insertLinePrefix('# ')}
-            className="rounded p-1 hover:bg-slate-200/80 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+            className="rounded p-1 hover:bg-[var(--color-bg-card)] hover:text-[var(--color-text-primary)] transition"
             title="Heading 1"
           >
             <Heading1 className="h-3.5 w-3.5" />
@@ -323,7 +323,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ note }) => {
           <button
             type="button"
             onClick={() => insertLinePrefix('## ')}
-            className="rounded p-1 hover:bg-slate-200/80 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+            className="rounded p-1 hover:bg-[var(--color-bg-card)] hover:text-[var(--color-text-primary)] transition"
             title="Heading 2"
           >
             <Heading2 className="h-3.5 w-3.5" />
@@ -331,16 +331,16 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ note }) => {
           <button
             type="button"
             onClick={() => insertLinePrefix('### ')}
-            className="rounded p-1 hover:bg-slate-200/80 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+            className="rounded p-1 hover:bg-[var(--color-bg-card)] hover:text-[var(--color-text-primary)] transition"
             title="Heading 3"
           >
             <Heading3 className="h-3.5 w-3.5" />
           </button>
-          <span className="mx-1 h-3.5 w-px bg-slate-200 dark:bg-slate-800" />
+          <span className="mx-1 h-3.5 w-px bg-[var(--color-border-primary)]" />
           <button
             type="button"
             onClick={() => insertLinePrefix('- ')}
-            className="rounded p-1 hover:bg-slate-200/80 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+            className="rounded p-1 hover:bg-[var(--color-bg-card)] hover:text-[var(--color-text-primary)] transition"
             title="Bullet list"
           >
             <List className="h-3.5 w-3.5" />
@@ -348,7 +348,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ note }) => {
           <button
             type="button"
             onClick={() => insertLinePrefix('1. ')}
-            className="rounded p-1 hover:bg-slate-200/80 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+            className="rounded p-1 hover:bg-[var(--color-bg-card)] hover:text-[var(--color-text-primary)] transition"
             title="Numbered list"
           >
             <ListOrdered className="h-3.5 w-3.5" />
@@ -356,16 +356,16 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ note }) => {
           <button
             type="button"
             onClick={() => insertLinePrefix('- [ ] ')}
-            className="rounded p-1 hover:bg-slate-200/80 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+            className="rounded p-1 hover:bg-[var(--color-bg-card)] hover:text-[var(--color-text-primary)] transition"
             title="Task checkbox"
           >
             <CheckSquare className="h-3.5 w-3.5" />
           </button>
-          <span className="mx-1 h-3.5 w-px bg-slate-200 dark:bg-slate-800" />
+          <span className="mx-1 h-3.5 w-px bg-[var(--color-border-primary)]" />
           <button
             type="button"
             onClick={() => insertFormatting('`', '`', 'code')}
-            className="rounded p-1 hover:bg-slate-200/80 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+            className="rounded p-1 hover:bg-[var(--color-bg-card)] hover:text-[var(--color-text-primary)] transition"
             title="Inline code"
           >
             <Code className="h-3.5 w-3.5" />
@@ -373,7 +373,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ note }) => {
           <button
             type="button"
             onClick={() => insertFormatting('```\n', '\n```', 'code block')}
-            className="rounded p-1 hover:bg-slate-200/80 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+            className="rounded p-1 hover:bg-[var(--color-bg-card)] hover:text-[var(--color-text-primary)] transition"
             title="Code block"
           >
             <SquareCode className="h-3.5 w-3.5" />
@@ -381,7 +381,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ note }) => {
           <button
             type="button"
             onClick={() => insertLinePrefix('> ')}
-            className="rounded p-1 hover:bg-slate-200/80 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+            className="rounded p-1 hover:bg-[var(--color-bg-card)] hover:text-[var(--color-text-primary)] transition"
             title="Blockquote"
           >
             <Quote className="h-3.5 w-3.5" />
@@ -389,68 +389,94 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ note }) => {
         </div>
       )}
 
-      {/* Title Input */}
-      <div className="border-b border-slate-100 px-6 py-4 dark:border-slate-800/80">
-        <input
-          type="text"
-          value={title}
-          onChange={handleTitleChange}
-          placeholder="Untitled Note"
-          className="w-full bg-transparent text-xl font-bold tracking-tight text-slate-900 outline-none placeholder:text-slate-300 dark:text-slate-100 dark:placeholder:text-slate-600"
-        />
-      </div>
-
-      {/* Main Content: Split / Editor / Preview */}
+      {/* Main Content Area */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Editor Area */}
-        {(editorMode === 'editor' || editorMode === 'split') && (
-          <div
-            className={`flex flex-col h-full overflow-y-auto ${
-              editorMode === 'split' ? 'w-full md:w-1/2 border-r border-slate-200 dark:border-slate-800' : 'w-full'
-            }`}
-          >
-            <textarea
-              ref={textareaRef}
-              value={content}
-              onChange={handleContentChange}
-              placeholder="Write in markdown... (supports bold, italics, headers, lists, code, and checklists)"
-              className="h-full w-full resize-none bg-transparent p-6 font-mono text-sm leading-relaxed text-slate-800 outline-none placeholder:text-slate-300 dark:text-slate-200 dark:placeholder:text-slate-600"
-            />
+        {/* Full Editor Mode (Centered Editorial Column) */}
+        {editorMode === 'editor' && (
+          <div className="flex flex-col flex-1 h-full overflow-y-auto">
+            <div className="max-w-3xl mx-auto w-full px-6 py-8 flex flex-col flex-1">
+              <input
+                type="text"
+                value={title}
+                onChange={handleTitleChange}
+                placeholder="Untitled Note"
+                className="w-full bg-transparent text-2xl font-bold tracking-tight text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] outline-none border-b border-[var(--color-border-secondary)] pb-4 mb-4"
+              />
+              <textarea
+                ref={textareaRef}
+                value={content}
+                onChange={handleContentChange}
+                placeholder="Write in markdown... (supports bold, italics, headers, lists, code, and checklists)"
+                className="w-full flex-1 min-h-[400px] resize-none bg-transparent font-sans text-sm leading-relaxed text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] outline-none"
+              />
+            </div>
           </div>
         )}
 
-        {/* Live Preview Area */}
-        {(editorMode === 'preview' || editorMode === 'split') && (
-          <div
-            className={`flex flex-col h-full overflow-y-auto p-6 ${
-              editorMode === 'split' ? 'hidden md:flex md:w-1/2 bg-slate-50/40 dark:bg-slate-950/40' : 'w-full'
-            }`}
-          >
-            <MarkdownRenderer
-              markdown={content}
-              onToggleCheckbox={handleCheckboxToggleInPreview}
-            />
+        {/* Split View Mode */}
+        {editorMode === 'split' && (
+          <>
+            <div className="flex flex-col h-full w-full md:w-1/2 border-r border-[var(--color-border-primary)] overflow-y-auto p-6">
+              <input
+                type="text"
+                value={title}
+                onChange={handleTitleChange}
+                placeholder="Untitled Note"
+                className="w-full bg-transparent text-xl font-bold tracking-tight text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] outline-none border-b border-[var(--color-border-secondary)] pb-3 mb-3"
+              />
+              <textarea
+                ref={textareaRef}
+                value={content}
+                onChange={handleContentChange}
+                placeholder="Write in markdown..."
+                className="w-full flex-1 resize-none bg-transparent font-mono text-xs leading-relaxed text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] outline-none"
+              />
+            </div>
+            <div className="hidden md:flex flex-col h-full w-1/2 overflow-y-auto p-6 bg-[var(--color-bg-secondary)]">
+              <h1 className="text-xl font-bold tracking-tight text-[var(--color-text-primary)] border-b border-[var(--color-border-secondary)] pb-3 mb-3">
+                {title || 'Untitled Note'}
+              </h1>
+              <MarkdownRenderer
+                markdown={content}
+                onToggleCheckbox={handleCheckboxToggleInPreview}
+              />
+            </div>
+          </>
+        )}
+
+        {/* Preview Only Mode (Centered Book View) */}
+        {editorMode === 'preview' && (
+          <div className="flex flex-col flex-1 h-full overflow-y-auto">
+            <div className="max-w-3xl mx-auto w-full px-6 py-8 flex flex-col flex-1">
+              <h1 className="text-2xl font-bold tracking-tight text-[var(--color-text-primary)] border-b border-[var(--color-border-secondary)] pb-4 mb-6">
+                {title || 'Untitled Note'}
+              </h1>
+              <MarkdownRenderer
+                markdown={content}
+                onToggleCheckbox={handleCheckboxToggleInPreview}
+              />
+            </div>
           </div>
         )}
       </div>
 
       {/* Bottom Statistics & Auto-save Status */}
-      <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/60 px-6 py-2 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-400">
+      <div className="flex items-center justify-between border-t border-[var(--color-border-primary)] bg-[var(--color-bg-card)] px-6 py-2 text-xs text-[var(--color-text-muted)]">
         <div className="flex items-center gap-3">
           <span>
-            <strong className="font-mono tabular-nums">{wordCount}</strong> words
+            <strong className="font-mono tabular-nums text-[var(--color-text-secondary)]">{wordCount}</strong> words
           </span>
           <span aria-hidden="true">·</span>
           <span>
-            <strong className="font-mono tabular-nums">{charCount}</strong> chars
+            <strong className="font-mono tabular-nums text-[var(--color-text-secondary)]">{charCount}</strong> chars
           </span>
           <span aria-hidden="true">·</span>
           <span>
-            <strong className="font-mono tabular-nums">{readTime}</strong> min read
+            <strong className="font-mono tabular-nums text-[var(--color-text-secondary)]">{readTime}</strong> min read
           </span>
         </div>
 
-        <div className="flex items-center gap-2 font-mono text-[11px]">
+        <div className="flex items-center gap-2 font-mono text-xs">
           {isSaved ? (
             <span className="text-emerald-600 dark:text-emerald-400">✓ Saved locally</span>
           ) : (
@@ -685,7 +711,7 @@ function renderInline(text: string): React.ReactNode {
       parts.push(
         <code
           key={keyIndex++}
-          className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[11px] text-indigo-600 dark:bg-slate-800 dark:text-indigo-400"
+          className="rounded bg-slate-100 px-1 py-0.5 font-mono text-xs text-indigo-600 dark:bg-slate-800 dark:text-indigo-400"
         >
           {target}
         </code>

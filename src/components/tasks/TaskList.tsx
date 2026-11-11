@@ -24,15 +24,15 @@ export const TaskList: React.FC<TaskListProps> = ({
 }) => {
   if (tasks.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-200 py-16 text-center dark:border-slate-800">
-        <CheckSquare className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-700" />
-        <p className="mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+      <div className="rounded-xl border border-dashed border-[var(--color-border-primary)] py-16 text-center">
+        <CheckSquare className="mx-auto h-8 w-8 text-[var(--color-text-muted)] opacity-60" />
+        <p className="mt-2 text-xs font-medium text-[var(--color-text-secondary)]">
           {emptyMessage}
         </p>
         {onCreateTask && (
           <button
             onClick={onCreateTask}
-            className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 transition"
+            className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[var(--color-accent)] px-3.5 py-1.5 text-xs font-medium text-white hover:bg-[var(--color-accent-hover)] transition cursor-pointer"
           >
             <Plus className="h-3.5 w-3.5" />
             Create Task
@@ -50,7 +50,7 @@ export const TaskList: React.FC<TaskListProps> = ({
       {/* Pending tasks grid */}
       <div className="space-y-3">
         {completedTasks.length > 0 && (
-          <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+          <h3 className="text-xs font-semibold text-[var(--color-text-muted)]">
             Pending Tasks ({pendingTasks.length})
           </h3>
         )}
@@ -70,8 +70,8 @@ export const TaskList: React.FC<TaskListProps> = ({
 
       {/* Completed tasks section */}
       {completedTasks.length > 0 && (
-        <div className="space-y-3 pt-4 border-t border-slate-200/60 dark:border-slate-800">
-          <h3 className="text-xs font-semibold text-slate-400 dark:text-slate-500">
+        <div className="space-y-3 pt-4 border-t border-[var(--color-border-secondary)]">
+          <h3 className="text-xs font-semibold text-[var(--color-text-muted)]">
             Completed Tasks ({completedTasks.length})
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

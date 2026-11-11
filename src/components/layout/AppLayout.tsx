@@ -53,9 +53,9 @@ export const AppLayout: React.FC = () => {
   else if (path.startsWith('/settings')) pageTitle = 'Settings';
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-100 dark:bg-slate-950 font-sans">
+    <div className="flex h-screen w-screen overflow-hidden bg-[var(--color-bg-secondary)] dark:bg-[var(--color-bg-primary)] font-sans">
       {/* Mobile Top Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 z-30 flex h-12 items-center justify-between border-b border-slate-200 bg-white px-4 dark:border-slate-800 dark:bg-slate-900">
+      <header className="md:hidden fixed top-0 left-0 right-0 z-30 flex h-12 items-center justify-between border-b border-[var(--color-border-primary)] bg-[var(--color-bg-card)] px-4 dark:border-[var(--color-border-primary)] dark:bg-[var(--color-bg-card)]">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setMobileDrawerOpen(true)}
@@ -84,7 +84,7 @@ export const AppLayout: React.FC = () => {
             className="fixed inset-0 bg-black/50 backdrop-blur-xs"
             onClick={() => setMobileDrawerOpen(false)}
           />
-          <div className="relative z-10 w-72 max-w-[85%] bg-white dark:bg-slate-950 shadow-2xl h-full">
+          <div className="relative z-10 w-72 max-w-[85%] bg-[var(--color-bg-card)] dark:bg-[var(--color-bg-primary)] shadow-2xl h-full">
             <button
               onClick={() => setMobileDrawerOpen(false)}
               className="absolute right-3 top-3 rounded-lg p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
@@ -104,7 +104,7 @@ export const AppLayout: React.FC = () => {
         </div>
 
         {/* Main Content Area (renders active route via React Router Outlet) */}
-        <main className="flex flex-1 flex-col h-full overflow-hidden bg-white dark:bg-slate-950">
+        <main className="flex flex-1 flex-col h-full overflow-hidden bg-[var(--color-bg-primary)] dark:bg-[var(--color-bg-primary)]">
           <Outlet />
         </main>
       </div>

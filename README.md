@@ -1,205 +1,128 @@
 # Daymark
 
-Daymark is an offline-first, local-first productivity web application for notes, tasks, folders, tags, search, archive, and trash. It is built with React 19, TypeScript, Vite 8, Zustand, and Dexie/IndexedDB, and configured as an installable Progressive Web App (PWA).
+Daymark is an offline-first, local-first productivity web app for notes, tasks, folders, tags, search, archive, and trash. It is built with React 19, TypeScript, Vite, Zustand, and Dexie (IndexedDB), and ships as an installable Progressive Web App (PWA).
 
-All entity records are stored locally on the device in IndexedDB (`DaymarkDB`). Basic CRUD, search, and organization do not require a network connection or external backend services.
+All data is stored on the device in IndexedDB (`DaymarkDB`). Core CRUD, search, and organization work without a network connection or backend.
 
-> **Sync Notice (V1):** The repository has no configured remote sync server, authentication, or external API. The sync queue and conflict management workflows represent client-side infrastructure; in this V1 build, queued work is not synchronized to another device.
+**Sync status (V1):** *This build has no remote sync server, authentication, or external API. The sync queue and conflict-management code is client-side infrastructure only, so queued changes are not synchronized to other devices.*
 
----
+## Technologies
 
-## Table of Contents
+Versions are pinned in `bun.lock`.
 
-- [Verified Technology Stack](#verified-technology-stack)
-- [Prerequisites & Installation](#prerequisites--installation)
-- [Local Development & Verification](#local-development--verification)
-- [Docker Setup](#docker-setup)
-- [Offline & PWA Testing](#offline--pwa-testing)
-- [Production Deployment](#production-deployment)
-- [Data Storage, Backup & Restore](#data-storage-backup--restore)
-- [Known Limitations](#known-limitations)
-- [Architecture & Agent Guidelines](#architecture--agent-guidelines)
+- **Frontend:** [React 19](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), [Tailwind CSS 4](https://tailwindcss.com/), [Vite](https://vite.dev/)
+- **State & Routing:** [Zustand](https://zustand.docs.pmnd.rs/), [React Router](https://reactrouter.com/)
+- **Storage:** [Dexie.js](https://dexie.org/) (IndexedDB)
+- **Utilities:** [Zod](https://zod.dev/), [date-fns](https://date-fns.org/), [Lucide React](https://lucide.dev/)
+- **PWA:** [Vite PWA](https://vite-pwa-org.netlify.app/), [Workbox](https://developer.chrome.com/docs/workbox/)
+- **Testing:** [Vitest](https://vitest.dev/), [Playwright](https://playwright.dev/)
 
----
+## Getting Started
 
-## Verified Technology Stack
+```bash
+bun install --frozen-lockfile
+bunx playwright install chromium  
+bun run dev
+```
 
-`package.json` declares semver ranges and `bun.lock` pins the exact resolutions verified for this build:
+Open http://localhost:3000. No API keys or `.env` file is needed.
 
-| Area | Technology / Package | Locked Version |
-| :--- | :--- | :--- |
-| **UI Library** | React / React DOM | 19.3.1 |
-| **Language** | TypeScript | 7.0.2 |
-| **Build Tooling** | Vite / React Plugin | 8.3.7 / 6.3.0 |
-| **Routing** | React Router DOM | 7.18.5 |
-| **Database** | Dexie / dexie-react-hooks | 4.4.7 / 4.4.0 |
-| **State Management** | Zustand | 5.1.0 |
-| **Validation & Dates** | Zod / date-fns | 4.6.7 / 4.4.0 |
-| **Styling** | Tailwind CSS / Vite Plugin | 4.3.5 / 4.3.5 |
-| **PWA & Service Worker**| vite-plugin-pwa / Workbox Window | 2.0.0 / 7.4.1 |
-| **Icons** | Lucide React | 0.546.0 |
-| **Unit Testing** | Vitest / fake-indexeddb | 5.1.0 / 6.2.8 |
-| **E2E Browser Testing** | Playwright Test | 1.65.0 |
+## Scripts
 
----
-
-## Prerequisites & Installation
-
-### Prerequisites
-- **Node.js**: Supported by Vite 8 (Node 20.19+ or 22.12+).
-- **Bun**: Required to maintain locked dependency installations from `bun.lock`.
-- **Chromium**: Required for Playwright end-to-end tests.
-- **Browser**: Any modern browser with IndexedDB and Service Worker support.
-
-### Setup Steps
-
-1. **Install dependencies** (using frozen lockfile mode):
-   ```powershell
-   bun install --frozen-lockfile
-   ```
-
-2. **Install Chromium for Playwright browser testing** (one-time setup):
-   ```powershell
-   bunx playwright install chromium
-   ```
-
-3. **Start the local development server**:
-   ```powershell
-   bun run dev
-   ```
-   Open `http://localhost:3000`. No API keys, credentials, or `.env` configurations are required for local note/task functionality.
-
----
-
-## Local Development & Verification
-
-### Available Scripts
-
-| Command | Purpose |
+| Command | Description |
 | :--- | :--- |
-| `bun run dev` | Starts the Vite dev server at `http://localhost:3000` |
-| `bun run lint` | Runs TypeScript static type checking (`tsc --noEmit`) |
-| `bun run test` | Runs the Vitest test suite with `fake-indexeddb` |
-| `bun run build` | Compiles production assets into `dist/` |
-| `bun run preview` | Locally serves the built production bundle on port 4173 |
-| `bun run test:e2e` | Runs Playwright tests against the production preview build |
+| `bun run dev` | Start the Vite dev server on port 3000 |
+| `bun run lint` | Type-check with `tsc --noEmit` |
+| `bun run test` | Run 81 Vitest unit tests (fake-indexeddb) |
+| `bun run build` | Build production assets to `dist/` |
+| `bun run preview` | Serve the production build on port 4173 |
+| `bun run test:e2e` | Run Playwright tests against the production preview |
 
-### Data Development Guidelines
-- Keep persisted entities in Dexie/IndexedDB and utilize existing service modules (`notesService`, `tasksService`, etc.) for mutations.
-- Entity modifications and their outbox operations must commit in a single Dexie transaction.
-- Do not reset, purge, or alter user database content to force tests to pass; tests run against isolated `fake-indexeddb` instances.
-- Maintain `bun.lock` without silent modifications.
+## Development Guidelines
 
----
+- Persist entities through Dexie/IndexedDB, and make mutations through service modules (`notesService`, `tasksService`, etc.).
+- Entity changes and their outbox operations must commit in a single Dexie transaction.
+- Tests run against isolated `fake-indexeddb` instances. Do not reset or alter real user data to make tests pass.
+- Do not modify `bun.lock` without intent.
 
-## Docker Setup
+## Docker
 
-Daymark provides containerized options via `Dockerfile` and `compose.yaml`.
+**Production-style build (Nginx, SPA routing, PWA caching headers)**
 
-### 1. Production-Style Local Container (Nginx)
-
-Runs the multi-stage static build served through Nginx with SPA routing and PWA caching headers:
-
-```powershell
+```bash
 docker compose up --build -d
-
 docker compose ps
-
 docker compose down
 ```
-Open `http://localhost:8080`.
 
-> **Note on Data Isolation:** The Docker container does not store an application database. All records reside in the browser's IndexedDB for the active origin. Browser data created at `http://localhost:3000` is isolated from `http://localhost:8080`.
+Open http://localhost:8080.
 
-### 2. Vite Development Container
+**Vite dev server with hot reload**
 
-Runs the hot-reloading Vite dev server inside a container:
-
-```powershell
+```bash
 docker compose --profile dev up --build daymark-dev
 ```
-Open `http://localhost:3000`. Code is bind-mounted for live editing, while `node_modules` is preserved inside a named volume (`daymark_node_modules`).
 
----
+Open http://localhost:3000. Source is bind-mounted, and `node_modules` lives in the named volume `daymark_node_modules`.
 
-## Offline & PWA Testing
+> Containers do not hold an application database. Each origin has its own IndexedDB, so data at `localhost:3000` is separate from data at `localhost:8080`.
 
-Daymark relies on Workbox to precache the application shell assets, allowing the app to launch offline once loaded online at least once (warm-cache offline support).
+## Offline & PWA
 
-### Manual Offline Browser Verification
-1. Build and preview the production app (`bun run build && bun run preview`).
-2. Open `http://localhost:4173` in your browser. Wait for the Service Worker to register and reload the page once.
-3. Create or edit notes and tasks; confirm search results display correctly.
-4. In browser DevTools, switch network throttling to **Offline**.
-5. Reload the page: verify the app shell loads from cache and stored records remain accessible.
-6. Close and reopen the tab while still offline to confirm persistence.
+Workbox precaches the application shell, so Daymark launches offline after it has loaded online at least once.
 
-### Automated Coverage
-- `bun run test`: Executes 81 Vitest unit tests verifying offline CRUD and sync engine logic in `fake-indexeddb`.
-- `bun run test:e2e`: Executes Playwright tests against the production preview in desktop (1440×960) and mobile (390×844) viewports, verifying offline warm reload and navigation.
+**Manual check**
 
----
+1. Run `bun run build && bun run preview`, open http://localhost:4173, and reload once so the service worker registers.
+2. Create or edit notes and tasks.
+3. In DevTools, set network throttling to **Offline**.
+4. Reload. The shell should load from cache, and your records should remain.
+5. Close and reopen the tab while offline to confirm persistence.
 
-## Production Deployment
+**Automated coverage**
 
-Daymark compiles to pure static client-side files in `dist/`. Deploy to any static hosting provider (e.g., Cloudflare Pages, Netlify, Vercel, AWS S3/CloudFront, Nginx):
+- `bun run test`: offline CRUD and sync-engine logic.
+- `bun run test:e2e`: offline warm reload and navigation at desktop (1440×960) and mobile (390×844) viewports.
 
-```powershell
+## Deployment
+
+Daymark compiles to static files in `dist/` and can be hosted on any static provider (Cloudflare Pages, Netlify, Vercel, AWS S3/CloudFront, Nginx, etc.).
+
+```bash
 bun install --frozen-lockfile
 bun run lint
 bun run test
 bun run build
 ```
 
-### Hosting Requirements
-- **SPA Fallback:** All client route requests (e.g., `/notes`, `/tasks`, `/settings`) must serve `index.html`.
-- **HTTPS Required:** Service Workers, storage persistence, and PWA installation require a secure HTTPS origin (with `localhost` as the local development exception).
-- **Cache Headers:**
-  - `sw.js` and `manifest.webmanifest`: `no-cache` or short TTL to ensure prompt updates.
-  - `/assets/*` (content-hashed JS/CSS/images): Long-lived immutable caching (`Cache-Control: public, max-age=31536000, immutable`).
-- **Base Path:** Default configuration mounts at `/`. Subpath hosting requires updating the Vite base, manifest, router, and Service Worker scope.
+**Hosting requirements**
 
-### Deploying to Vercel
-Daymark includes a pre-configured `vercel.json` with SPA routing and PWA caching headers.
+- **SPA fallback:** Every route (e.g., `/notes`, `/tasks/:id`, `/settings`) must serve `index.html`.
+- **HTTPS:** Required for service workers, storage persistence, and installation (`localhost` is exempt).
+- **Cache headers:**
+  - `sw.js` and `manifest.webmanifest`: `no-cache` or a short TTL.
+  - `/assets/*`: `public, max-age=31536000, immutable`.
+- **Subpath hosting:** The default base is `/`. Hosting under a subpath requires updating the Vite base, manifest, router, and service worker scope.
 
-1. **Push your repository to GitHub.**
-2. Go to [vercel.com/new](https://vercel.com/new) and import your `daymark` repository.
-3. Configure project settings:
-   - **Framework Preset:** `Vite`
-   - **Build Command:** `bun run build` (or `vite build`)
-   - **Output Directory:** `dist`
-   - **Install Command:** `bun install --frozen-lockfile`
-   - **Environment Variables:** None required.
-4. Click **Deploy**. Vercel will build the static PWA and serve it over HTTPS. Direct links and refreshes on nested routes (`/notes`, `/tasks/:id`, `/settings`) will route seamlessly to `index.html`.
+**Vercel:** The repository includes a `vercel.json` with SPA routing and cache headers. Import the repository, then set Framework Preset to `Vite`, Build Command to `bun run build`, Output Directory to `dist`, and Install Command to `bun install --frozen-lockfile`. No environment variables are required.
 
----
+## Data, Backup & Restore
 
-## Data Storage, Backup & Restore
-
-### IndexedDB Storage (`DaymarkDB`)
-Entity records (notes, tasks, folders, tags) and operational records (outbox, conflicts, settings) are managed by Dexie in browser IndexedDB.
-
-### Backup & Restore Specification
-Daymark provides a versioned JSON backup format (v1) accessible under **Settings → Backup & Restore**:
-- **Export Scope:** Exports all entity rows (notes, tasks, folders, tags), allowlisted UI preferences (theme in localStorage, default task sort in settings), and portable unsynced outbox operations. Excludes device-specific revision markers, conflict logs, and retry errors.
-- **Additive Restore:** Restoring a backup is additive and non-destructive. Duplicate IDs prompt the user for an explicit per-record action (*Keep Existing* vs. *Replace*). It will never silently delete unrelated local data.
-
----
+- **Storage:** Notes, tasks, folders, and tags are stored in IndexedDB via Dexie, along with the outbox, conflict records, and settings.
+- **Export:** *Settings → Backup & Restore* produces a versioned JSON backup (v1) containing all entity rows, allowlisted preferences (theme and default task sort), and portable unsynced outbox operations. Device-specific revision markers, conflict logs, and retry errors are excluded.
+- **Restore:** Restoring is additive and non-destructive. For duplicate IDs, you choose *Keep Existing* or *Replace* per record. Unrelated local data is never silently deleted.
 
 ## Known Limitations
 
-- **No Remote Sync Server:** The default sync adapter reports that no remote endpoint is configured. Outbox entries remain queued locally until a real adapter and server are provided.
-- **Client-Side Conflict Verification:** Conflict resolution tests validate client logic with fixture data; real multi-device concurrent revision behavior is not tested against an external backend.
-- **Warm-Cache Offline Startup:** Offline startup requires that the application shell was cached during a prior online session. `public/offline.html` is not configured as the Workbox navigation fallback.
-- **Browser-Specific Quota Recovery:** While storage estimation and quota error detection are present, automatic recovery from browser storage quota exhaustion is incomplete.
-- **Direct Dexie Access in Presentation:** `DashboardPage`, `TrashPage`, `ConflictDialog`, and `useData` currently make direct Dexie queries alongside service calls.
-- **Bundle Chunk Size:** Production builds currently generate a JavaScript chunk exceeding 500 kB (code-splitting optimization pending).
-- **Accessibility & Focus Auditing:** Control labels, ARIA landmarks, and keyboard focus states are partially implemented and have not undergone a full accessibility audit.
+- **No remote sync server.** The default sync adapter reports that no endpoint is configured, so outbox entries remain queued locally until a real adapter and server exist.
+- **Conflict handling is client-tested only.** Tests use fixture data. Real multi-device concurrency has not been tested against a backend.
+- **Offline startup depends on a prior online session.** `public/offline.html` is not configured as the Workbox navigation fallback.
+- **Quota recovery is incomplete.** Quota errors are detected, but automatic recovery is not fully implemented.
+- **Direct Dexie access in the UI.** `DashboardPage`, `TrashPage`, `ConflictDialog`, and `useData` query Dexie directly alongside service calls.
+- **Large bundle.** The production JavaScript chunk exceeds 500 kB; code-splitting is pending.
+- **Accessibility.** Labels, ARIA landmarks, and focus states are partially implemented and have not had a full audit.
 
----
+## Documentation
 
-## Architecture & Agent Guidelines
-
-For in-depth technical documentation:
-- **System Architecture & Database Schema:** See [ARCHITECTURE.md](ARCHITECTURE.md) for database store definitions, contracts, lifecycle state, sync design, and migration guidelines.
-- **Agent Pair Programming Instructions:** See [AGENTS.md](AGENTS.md) for coding conventions, rules, and operational constraints for AI assistants.
+- [ARCHITECTURE.md](ARCHITECTURE.md): database stores, contracts, lifecycle state, sync design, and migrations
+- [AGENTS.md](AGENTS.md): coding conventions and constraints for AI assistants

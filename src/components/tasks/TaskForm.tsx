@@ -282,7 +282,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                 <CheckSquare className="h-3 w-3 text-indigo-500" /> Subtasks / Checklist
               </span>
               {subtasks.length > 0 && (
-                <span className="font-mono text-[10px] text-slate-400">
+                <span className="font-mono text-xs text-slate-400">
                   {subtasks.filter((s) => s.isCompleted).length}/{subtasks.length} done
                 </span>
               )}

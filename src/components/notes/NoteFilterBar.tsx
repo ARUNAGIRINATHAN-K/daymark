@@ -42,18 +42,18 @@ export const NoteFilterBar: React.FC<NoteFilterBarProps> = ({
       <div className="flex flex-wrap items-center gap-3">
         {/* Substring Search Input */}
         <div className="relative flex-1 min-w-[220px]">
-          <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+          <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-[var(--color-text-muted)]" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search notes by title, content, or tag..."
-            className="w-full rounded-xl border border-slate-200 bg-white py-1.5 pl-8 pr-8 text-xs text-slate-900 outline-none transition focus:border-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+            className="w-full rounded-lg border border-[var(--color-border-primary)] bg-[var(--color-bg-card)] py-1.5 pl-8 pr-8 text-xs text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-accent)]"
           />
           {searchQuery && (
             <button
               onClick={() => onSearchChange('')}
-              className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              className="absolute right-2.5 top-2.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
               title="Clear search"
             >
               <X className="h-3.5 w-3.5" />
@@ -66,7 +66,7 @@ export const NoteFilterBar: React.FC<NoteFilterBarProps> = ({
           <select
             value={selectedFolderId || ''}
             onChange={(e) => onSelectFolder(e.target.value ? e.target.value : null)}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 outline-none cursor-pointer dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+            className="rounded-lg border border-[var(--color-border-primary)] bg-[var(--color-bg-card)] px-3 py-1.5 text-xs text-[var(--color-text-primary)] outline-none cursor-pointer"
           >
             <option value="">All Folders</option>
             {folders.map((folder) => (
@@ -81,7 +81,7 @@ export const NoteFilterBar: React.FC<NoteFilterBarProps> = ({
         {hasActiveFilters && (
           <button
             onClick={handleReset}
-            className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+            className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-accent)] hover:underline"
           >
             <RotateCcw className="h-3 w-3" />
             Reset filters
@@ -92,7 +92,7 @@ export const NoteFilterBar: React.FC<NoteFilterBarProps> = ({
       {/* Tag Filters Strip */}
       {tags.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 mr-1 flex items-center gap-1">
+          <span className="text-xs font-medium text-[var(--color-text-muted)] mr-1 flex items-center gap-1">
             <TagIcon className="h-3 w-3" /> Tags:
           </span>
           {tags.map((t) => {
@@ -101,10 +101,10 @@ export const NoteFilterBar: React.FC<NoteFilterBarProps> = ({
               <button
                 key={t.id}
                 onClick={() => onSelectTag(isSelected ? null : t.id)}
-                className={`rounded-lg px-2.5 py-0.5 text-xs font-medium transition ${
+                className={`rounded-md px-2.5 py-0.5 text-xs font-medium transition ${
                   isSelected
-                    ? 'bg-indigo-600 text-white shadow-2xs'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800'
+                    ? 'bg-[var(--color-accent)] text-white shadow-2xs'
+                    : 'bg-[var(--color-bg-card)] border border-[var(--color-border-primary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-secondary)]'
                 }`}
               >
                 #{t.name}

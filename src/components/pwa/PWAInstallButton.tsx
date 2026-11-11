@@ -23,7 +23,7 @@ export const PWAInstallButton: React.FC = () => {
           <Download className="h-3.5 w-3.5" />
           Install App
         </span>
-        <span className="text-[10px] uppercase tracking-wider text-indigo-500 dark:text-indigo-400">Offline PWA</span>
+        <span className="text-xs uppercase tracking-wider text-indigo-500 dark:text-indigo-400">Offline PWA</span>
       </button>
     );
   }
@@ -40,7 +40,7 @@ export const PWAInstallButton: React.FC = () => {
             <Smartphone className="h-3.5 w-3.5" />
             Install on iOS
           </span>
-          <span className="text-[10px] uppercase text-slate-400">Safari</span>
+          <span className="text-xs uppercase text-slate-400">Safari</span>
         </button>
 
         {showIOSGuide && (

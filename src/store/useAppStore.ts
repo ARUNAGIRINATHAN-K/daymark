@@ -45,10 +45,10 @@ interface AppState {
 
 // Initial theme check
 const getInitialTheme = (): boolean => {
-  if (typeof window === 'undefined') return true;
+  if (typeof window === 'undefined') return false;
   const saved = localStorage.getItem('daymark_theme');
   if (saved) return saved === 'dark';
-  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  return false;
 };
 
 export const useAppStore = create<AppState>((set) => ({

@@ -29,7 +29,7 @@ export const PWAUpdatePrompt: React.FC = () => {
 
       <div className="flex-1 min-w-0">
         <h4 className="text-xs font-bold text-white">App Update Available</h4>
-        <p className="mt-0.5 text-[11px] text-slate-300">
+        <p className="mt-0.5 text-xs text-slate-300">
           A new version of Daymark is ready. Reload to update (your local notes and tasks remain safe).
         </p>
       </div>

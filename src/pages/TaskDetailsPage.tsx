@@ -131,7 +131,7 @@ export const TaskDetailsPage: React.FC = () => {
               {task.title}
             </h1>
             {task.completedAt && (
-              <p className="mt-1 text-[11px] font-mono text-emerald-600 dark:text-emerald-400">
+              <p className="mt-1 text-xs font-mono text-emerald-600 dark:text-emerald-400">
                 Completed on {format(task.completedAt, 'MMM d, yyyy HH:mm')}
               </p>
             )}
@@ -141,7 +141,7 @@ export const TaskDetailsPage: React.FC = () => {
         {/* Status, Priority & Folder Attributes Strip */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-y border-slate-100 py-4 dark:border-slate-800/80">
           <div>
-            <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block mb-1">
+            <label className="text-xs font-medium text-slate-400 uppercase tracking-wider block mb-1">
               Status
             </label>
             <select
@@ -156,7 +156,7 @@ export const TaskDetailsPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block mb-1">
+            <label className="text-xs font-medium text-slate-400 uppercase tracking-wider block mb-1">
               Priority
             </label>
             <select
@@ -172,7 +172,7 @@ export const TaskDetailsPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block mb-1">
+            <label className="text-xs font-medium text-slate-400 uppercase tracking-wider block mb-1">
               Due Date
             </label>
             <input
@@ -286,7 +286,7 @@ export const TaskDetailsPage: React.FC = () => {
               <h4 className="text-xs font-bold text-slate-900 dark:text-white">
                 {linkedNote.title}
               </h4>
-              <p className="mt-1 line-clamp-2 text-[11px] text-slate-500 dark:text-slate-400">
+              <p className="mt-1 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
                 {linkedNote.content.replace(/[#*`_>-]/g, '').trim()}
               </p>
             </div>

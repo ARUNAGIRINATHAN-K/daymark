@@ -7,15 +7,13 @@ export const DEFAULT_TASK_SORT: TaskSortBy = 'createdAt';
 
 export class SettingsService {
   getThemePreference(): ThemePreference {
-    if (typeof localStorage === 'undefined') return 'dark';
+    if (typeof localStorage === 'undefined') return 'light';
     const saved = localStorage.getItem(THEME_STORAGE_KEY);
     if (saved) {
       const parsed = ThemePreferenceSchema.safeParse(saved);
       if (parsed.success) return parsed.data;
     }
-    return typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
-      ? 'dark'
-      : 'light';
+    return 'light';
   }
 
   setThemePreference(theme: ThemePreference): void {

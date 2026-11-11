@@ -45,18 +45,18 @@ export const UpcomingPage: React.FC = () => {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 bg-slate-50/50 dark:bg-slate-950">
+    <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 bg-[var(--color-bg-primary)] text-[var(--color-text-primary)]">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5 dark:border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--color-border-primary)] pb-5">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+          <div className="flex items-center gap-2 text-sm font-semibold text-[var(--color-text-muted)]">
             <CalendarDays className="h-3.5 w-3.5" />
-            <span>Future Schedule</span>
+            <span>Upcoming</span>
           </div>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-[var(--color-text-primary)]">
             Upcoming
           </h1>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
             {upcomingTasks.length} tasks scheduled for future dates
           </p>
         </div>
@@ -66,7 +66,7 @@ export const UpcomingPage: React.FC = () => {
             setEditingTask(null);
             setIsFormOpen(true);
           }}
-          className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-medium text-white shadow-xs transition hover:bg-indigo-700"
+          className="flex items-center gap-1.5 rounded-lg bg-[var(--color-accent)] px-3.5 py-2 text-xs font-medium text-white shadow-xs transition hover:bg-[var(--color-accent-hover)] cursor-pointer"
         >
           <Plus className="h-4 w-4" />
           Schedule Task
@@ -74,12 +74,12 @@ export const UpcomingPage: React.FC = () => {
       </div>
 
       {upcomingTasks.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-200 py-16 text-center dark:border-slate-800">
-          <CalendarDays className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-700" />
-          <p className="mt-2 text-xs font-medium text-slate-700 dark:text-slate-300">
+        <div className="rounded-xl border border-dashed border-[var(--color-border-primary)] py-16 text-center">
+          <CalendarDays className="mx-auto h-8 w-8 text-[var(--color-text-muted)] opacity-60" />
+          <p className="mt-2 text-xs font-medium text-[var(--color-text-secondary)]">
             No upcoming tasks scheduled.
           </p>
-          <p className="mt-1 text-[11px] text-slate-400">
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
             Tasks with future due dates will appear here organized by date.
           </p>
           <button
@@ -87,7 +87,7 @@ export const UpcomingPage: React.FC = () => {
               setEditingTask(null);
               setIsFormOpen(true);
             }}
-            className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-medium text-white hover:bg-indigo-700 transition"
+            className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-[var(--color-accent)] px-4 py-2 text-xs font-medium text-white hover:bg-[var(--color-accent-hover)] transition cursor-pointer"
           >
             <Plus className="h-3.5 w-3.5" />
             Schedule Upcoming Task
