@@ -147,7 +147,7 @@ Existing code has direct database reads in some pages/hooks. Treat that as a kno
 - For a schema change, add a higher Dexie version with a complete `.stores()` declaration and a deliberate upgrade callback where data needs transformation.
 - Migrations must be additive and preserve existing entity records and pending local operations. Do not rename/remove fields, stores, or indexes without explicit approval and a reviewed migration/recovery plan.
 - Test migration behavior against both a populated database and pending outbox data before shipping.
-- Keep `src/types/`, Zod schemas, database indexes, service behavior, tests, and root `DATABASE_SCHEMA.md` aligned. Treat migrations as data-sensitive changes.
+- Keep `src/types/`, Zod schemas, database indexes, service behavior, tests, and `ARCHITECTURE.md` aligned. Treat migrations as data-sensitive changes.
 
 ## 13. Prohibited architectural changes
 
@@ -183,5 +183,5 @@ Use the checked-in Bun lockfile and frozen install for reproducible dependencies
 
 - Update the relevant docs whenever an approved change affects architecture, data contracts, schema/migrations, offline/PWA behavior, feature status, or development commands.
 - Keep documentation factual and distinguish implementation from UI-only, planned, or runtime-unverified behavior.
-- Project documentation is maintained as root-level Markdown files: `PROJECT_OVERVIEW.md`, `ARCHITECTURE.md`, `DATABASE_SCHEMA.md`, `IMPLEMENTATION_STATUS.md`, `DEVELOPMENT_ROADMAP.md`, `CODEX_RULES.md`, `INSTALLATION.md`, `LOCAL_DEVELOPMENT.md`, `OFFLINE_TESTING.md`, `BACKUP_RESTORE.md`, `KNOWN_LIMITATIONS.md`, `PRODUCTION_DEPLOYMENT.md`, and `DOCKER.md`.
+- Project documentation is maintained across three consolidated root Markdown files: `README.md` (overview, development, testing, deployment, docker, limitations), `ARCHITECTURE.md` (system architecture, data flows, database schema, and migration rules), and `AGENTS.md` (agent instructions and pair programming constraints).
 - Update this `AGENTS.md` when its instructions or the verified architecture change.
