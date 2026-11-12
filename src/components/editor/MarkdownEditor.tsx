@@ -6,6 +6,8 @@ import {
   Code,
   Columns,
   Eye,
+  FileDown,
+  FileText,
   Folder,
   Heading1,
   Heading2,
@@ -25,6 +27,7 @@ import { useFolders, useTags } from '../../hooks/useData';
 import { noteService } from '../../services/noteService';
 import { useAppStore } from '../../store/useAppStore';
 import type { EditorMode, Note } from '../../types';
+import { createNoteExportFilename, downloadTextFile, markdownToPlainText } from '../../utils/export.utils';
 
 interface MarkdownEditorProps {
   note: Note;
@@ -38,10 +41,12 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ note }) => {
   const [title, setTitle] = useState(note.title);
   const [content, setContent] = useState(note.content);
   const [isSaved, setIsSaved] = useState(true);
+  const [exportStatus, setExportStatus] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
   const [, startTransition] = useTransition();
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const exportStatusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Sync internal state when active note changes
   useEffect(() => {
@@ -136,6 +141,26 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ note }) => {
 
   const handleFolderChange = async (folderId: string | null) => {
     await noteService.update(note.id, { folderId });
+  };
+
+  const showExportStatus = (kind: 'success' | 'error', text: string) => {
+    setExportStatus({ kind, text });
+    if (exportStatusTimeoutRef.current) {
+      clearTimeout(exportStatusTimeoutRef.current);
+    }
+    exportStatusTimeoutRef.current = setTimeout(() => setExportStatus(null), 6000);
+  };
+
+  const handleExport = (format: 'md' | 'txt') => {
+    try {
+      const asMarkdown = format === 'md';
+      const body = asMarkdown ? content : markdownToPlainText(content);
+      const filename = createNoteExportFilename(title, format);
+      downloadTextFile(filename, body, asMarkdown ? 'text/markdown' : 'text/plain');
+      showExportStatus('success', `Exported ${filename}`);
+    } catch (err) {
+      showExportStatus('error', `Export failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
   };
 
   const handleToggleTag = async (tagId: string) => {
@@ -258,6 +283,24 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ note }) => {
           <div className="h-4 w-px bg-[var(--color-border-primary)] mx-0.5" />
 
           {/* Action buttons */}
+          <button
+            onClick={() => handleExport('md')}
+            className="rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-bg-secondary)] hover:text-[var(--color-text-primary)]"
+            title="Export as Markdown (.md)"
+            aria-label="Export note as a Markdown file"
+          >
+            <FileDown className="h-4 w-4" />
+          </button>
+
+          <button
+            onClick={() => handleExport('txt')}
+            className="rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-bg-secondary)] hover:text-[var(--color-text-primary)]"
+            title="Export as plain text (.txt)"
+            aria-label="Export note as a plain text file"
+          >
+            <FileText className="h-4 w-4" />
+          </button>
+
           <button
             onClick={handleTogglePin}
             className={`rounded-lg p-1.5 transition ${
@@ -477,6 +520,14 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ note }) => {
         </div>
 
         <div className="flex items-center gap-2 font-mono text-xs">
+          {exportStatus && (
+            <span
+              role={exportStatus.kind === 'error' ? 'alert' : 'status'}
+              className={exportStatus.kind === 'error' ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}
+            >
+              {exportStatus.text}
+            </span>
+          )}
           {isSaved ? (
             <span className="text-emerald-600 dark:text-emerald-400">✓ Saved locally</span>
           ) : (
