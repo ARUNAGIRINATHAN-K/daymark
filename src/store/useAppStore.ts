@@ -25,6 +25,7 @@ interface AppState {
   isFolderModalOpen: boolean;
   isTagModalOpen: boolean;
   isOutboxModalOpen: boolean;
+  isShortcutsModalOpen: boolean;
 
   // Actions
   setActiveView: (view: MainView) => void;
@@ -40,6 +41,7 @@ interface AppState {
   setFolderModalOpen: (open: boolean) => void;
   setTagModalOpen: (open: boolean) => void;
   setOutboxModalOpen: (open: boolean) => void;
+  setShortcutsModalOpen: (open: boolean) => void;
   resetFilters: () => void;
 }
 
@@ -69,6 +71,7 @@ export const useAppStore = create<AppState>((set) => ({
   isFolderModalOpen: false,
   isTagModalOpen: false,
   isOutboxModalOpen: false,
+  isShortcutsModalOpen: false,
 
   setActiveView: (view) =>
     set({
@@ -132,6 +135,8 @@ export const useAppStore = create<AppState>((set) => ({
   setTagModalOpen: (open) => set({ isTagModalOpen: open }),
 
   setOutboxModalOpen: (open) => set({ isOutboxModalOpen: open }),
+
+  setShortcutsModalOpen: (open) => set({ isShortcutsModalOpen: open }),
 
   resetFilters: () =>
     set({

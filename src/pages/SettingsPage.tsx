@@ -28,7 +28,7 @@ import { useAppStore } from '../store/useAppStore';
 import { getStorageEstimate, type StorageEstimateResult } from '../utils/network.utils';
 
 export const SettingsPage: React.FC = () => {
-  const { isDarkMode, setTheme, setOutboxModalOpen } = useAppStore();
+  const { isDarkMode, setTheme, setOutboxModalOpen, setShortcutsModalOpen } = useAppStore();
   const { isInstalled } = usePWAInstall();
 
   const notes = useNotes();
@@ -306,6 +306,15 @@ export const SettingsPage: React.FC = () => {
               <kbd className="rounded bg-[var(--color-bg-card)] px-1.5 py-0.5 font-mono text-xs text-[var(--color-text-primary)] shadow-2xs border border-[var(--color-border-primary)]">
                 Debounced (400ms)
               </kbd>
+            </div>
+            <div className="flex items-center justify-between rounded-lg bg-[var(--color-bg-secondary)] p-2.5">
+              <span className="text-[var(--color-text-secondary)]">Shortcuts help dialog</span>
+              <button
+                onClick={() => setShortcutsModalOpen(true)}
+                className="rounded bg-[var(--color-bg-card)] px-1.5 py-0.5 font-mono text-xs text-[var(--color-text-primary)] shadow-2xs border border-[var(--color-border-primary)] hover:bg-[var(--color-bg-secondary)] cursor-pointer"
+              >
+                ? / Ctrl+/
+              </button>
             </div>
           </div>
         </div>

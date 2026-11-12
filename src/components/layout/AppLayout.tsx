@@ -1,9 +1,11 @@
 import React, { useEffect } from 'react';
 import { Menu, Search, X } from 'lucide-react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { isEditableTarget, isShortcutsHelpTrigger } from '../../lib/shortcuts';
 import { useAppStore } from '../../store/useAppStore';
 import { syncManager } from '../../sync/syncManager';
 import { FolderDialog } from '../modals/FolderDialog';
+import { ShortcutsDialog } from '../modals/ShortcutsDialog';
 import { TagDialog } from '../modals/TagDialog';
 import { OutboxInspectorModal } from '../outbox/OutboxInspectorModal';
 import { ConflictDialog } from '../sync/ConflictDialog';
@@ -18,6 +20,7 @@ export const AppLayout: React.FC = () => {
     isDarkMode,
     isMobileDrawerOpen,
     setMobileDrawerOpen,
+    setShortcutsModalOpen,
   } = useAppStore();
 
   useEffect(() => {
@@ -38,6 +41,22 @@ export const AppLayout: React.FC = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
   }, [location.pathname]);
+
+  // Global keyboard shortcuts: `?` or `Ctrl+/` (`Cmd+/` on macOS) toggles the
+  // shortcuts help dialog; Escape closes it. Ignored while typing.
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (isEditableTarget(event.target)) return;
+      if (isShortcutsHelpTrigger(event)) {
+        event.preventDefault();
+        setShortcutsModalOpen(!useAppStore.getState().isShortcutsModalOpen);
+      } else if (event.key === 'Escape' && useAppStore.getState().isShortcutsModalOpen) {
+        setShortcutsModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [setShortcutsModalOpen]);
 
   // Derive human title from pathname
   const path = location.pathname;
@@ -112,6 +131,7 @@ export const AppLayout: React.FC = () => {
       {/* Modals & Overlays */}
       <FolderDialog />
       <TagDialog />
+      <ShortcutsDialog />
       <OutboxInspectorModal />
       <ConflictDialog />
       <OfflineIndicator />
