@@ -10,6 +10,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { BackupRestorePanel } from '../components/settings/BackupRestorePanel';
+import { LocalFolderSyncPanel } from '../components/settings/LocalFolderSyncPanel';
 import { PWAInstallButton } from '../components/pwa/PWAInstallButton';
 import {
   useFolders,
@@ -162,6 +163,8 @@ export const SettingsPage: React.FC = () => {
         </div>
 
         <BackupRestorePanel onRestoredPreferences={setDefaultTaskSort} />
+
+        <LocalFolderSyncPanel />
 
         {/* Offline Storage & Sync Section */}
         <div className="rounded-xl border border-[var(--color-border-primary)] bg-[var(--color-bg-card)] p-5 shadow-2xs space-y-4">
