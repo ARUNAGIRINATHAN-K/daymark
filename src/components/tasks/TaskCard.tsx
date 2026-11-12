@@ -1,8 +1,9 @@
 import React from 'react';
-import { format, isBefore, startOfDay } from 'date-fns';
+import { isBefore, startOfDay } from 'date-fns';
 import { Calendar, CheckSquare, Clock, Folder as FolderIcon, MoreVertical, Trash2 } from 'lucide-react';
 import { useFolders } from '../../hooks/useData';
 import type { Task, TaskPriority } from '../../types';
+import { formatExactTimestamp, formatShortDate } from '../../utils/date.utils';
 
 interface TaskCardProps {
   task: Task;
@@ -50,6 +51,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
   const subtasks = task.subtasks || [];
   const completedSubtasks = subtasks.filter((s) => s.isCompleted).length;
+  const exactDueDate = formatExactTimestamp(task.dueDate);
 
   return (
     <div
@@ -110,10 +112,16 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                   : 'text-slate-600 dark:text-slate-400'
               }`}
             >
-              {isOverdue ? <Clock className="h-3 w-3" /> : <Calendar className="h-3 w-3" />}
-              {format(task.dueDate, 'MMM d')}
-              {isOverdue && ' (Overdue)'}
-            </span>
+               {isOverdue ? <Clock className="h-3 w-3" /> : <Calendar className="h-3 w-3" />}
+               <span
+                 title={exactDueDate ?? undefined}
+                 tabIndex={exactDueDate ? 0 : undefined}
+                 aria-label={exactDueDate ? `Due ${exactDueDate}` : undefined}
+               >
+                 {formatShortDate(task.dueDate)}
+               </span>
+               {isOverdue && ' (Overdue)'}
+             </span>
           ) : (
             <span className="text-slate-300 dark:text-slate-600">No due date</span>
           )}
