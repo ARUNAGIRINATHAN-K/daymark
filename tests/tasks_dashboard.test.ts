@@ -57,6 +57,33 @@ describe('Master Prompt 05: Task Management & Dashboard Metrics', () => {
       expect(outbox.length).toBe(2);
       expect(outbox[1].action).toBe('update');
     });
+
+    it('persists a reordered subtask checklist without changing its items', async () => {
+      const task = await tasksService.createTask({
+        title: 'Reorder checklist',
+        subtasks: [
+          { id: 'first', title: 'First item', isCompleted: true },
+          { id: 'second', title: 'Second item', isCompleted: false },
+          { id: 'third', title: 'Third item', isCompleted: false },
+        ],
+      });
+
+      await tasksService.updateTask(task.id, {
+        subtasks: [task.subtasks![2], task.subtasks![0], task.subtasks![1]],
+      });
+
+      const reopenedTask = await tasksService.getTaskById(task.id);
+      expect(reopenedTask?.subtasks?.map((subtask) => subtask.id)).toEqual([
+        'third',
+        'first',
+        'second',
+      ]);
+      expect(reopenedTask?.subtasks?.[1]).toEqual({
+        id: 'first',
+        title: 'First item',
+        isCompleted: true,
+      });
+    });
   });
 
   describe('Status Transitions & Completion Timestamps', () => {

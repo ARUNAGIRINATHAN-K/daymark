@@ -6,11 +6,11 @@ import {
   CheckSquare,
   Clock,
   FileText,
-  Folder as FolderIcon,
   Plus,
   Trash2,
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { SubtaskChecklist } from '../components/tasks/SubtaskChecklist';
 import { useFolders, useTags } from '../hooks/useData';
 import { useNote } from '../hooks/useNotes';
 import { useTask, useTasks } from '../hooks/useTasks';
@@ -221,39 +221,14 @@ export const TaskDetailsPage: React.FC = () => {
             )}
           </div>
 
-          <div className="space-y-2">
-            {subtasks.map((st) => (
-              <div
-                key={st.id}
-                className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 p-3 text-xs dark:border-slate-800 dark:bg-slate-950/50"
-              >
-                <label className="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
-                  <input
-                    type="checkbox"
-                    checked={st.isCompleted}
-                    onChange={() => handleToggleSubtask(st.id)}
-                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                  />
-                  <span
-                    className={
-                      st.isCompleted
-                        ? 'line-through text-slate-400 dark:text-slate-500'
-                        : 'text-slate-800 dark:text-slate-200'
-                    }
-                  >
-                    {st.title}
-                  </span>
-                </label>
-                <button
-                  onClick={() => handleRemoveSubtask(st.id)}
-                  className="p-1 text-slate-400 hover:text-red-500"
-                  title="Remove subtask"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ))}
-          </div>
+          <SubtaskChecklist
+            subtasks={subtasks}
+            onToggle={handleToggleSubtask}
+            onRemove={handleRemoveSubtask}
+            onReorder={(reorderedSubtasks) =>
+              updateTask(task.id, { subtasks: reorderedSubtasks }).then(() => undefined)
+            }
+          />
 
           <form onSubmit={handleAddSubtask} className="flex items-center gap-2 pt-1">
             <input
