@@ -1,7 +1,7 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { Archive, Folder as FolderIcon, MoveRight, Pin, Trash2 } from 'lucide-react';
-import { useFolders } from '../../hooks/useData';
+import { useFolders, useTags } from '../../hooks/useData';
 import type { Note } from '../../types';
 
 interface NoteCardProps {
@@ -11,6 +11,8 @@ interface NoteCardProps {
   onToggleArchive: (e: React.MouseEvent) => void;
   onMove: (e: React.MouseEvent) => void;
   onDelete: (e: React.MouseEvent) => void;
+  onSelectTag?: (e: React.MouseEvent, tagId: string) => void;
+  selectedTagId?: string | null;
 }
 
 export const NoteCard: React.FC<NoteCardProps> = ({
@@ -20,9 +22,13 @@ export const NoteCard: React.FC<NoteCardProps> = ({
   onToggleArchive,
   onMove,
   onDelete,
+  onSelectTag,
+  selectedTagId,
 }) => {
   const folders = useFolders();
+  const tags = useTags();
   const folder = note.folderId ? folders.find((f) => f.id === note.folderId) : null;
+  const noteTags = tags.filter((t) => note.tagIds.includes(t.id));
 
   return (
     <div
@@ -49,6 +55,33 @@ export const NoteCard: React.FC<NoteCardProps> = ({
       <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-[var(--color-text-secondary)]">
         {note.content.replace(/[#*`_>-]/g, '').trim() || 'No preview text'}
       </p>
+
+      {noteTags.length > 0 && (
+        <div className="mt-2 flex flex-wrap items-center gap-1">
+          {noteTags.map((tag) => {
+            const isSelected = selectedTagId === tag.id;
+            return (
+              <button
+                key={tag.id}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectTag?.(e, tag.id);
+                }}
+                aria-pressed={isSelected}
+                title={`Filter notes by #${tag.name}`}
+                className={`rounded-md px-2 py-0.5 text-xs font-medium transition cursor-pointer ${
+                  isSelected
+                    ? 'bg-[var(--color-accent)] text-white shadow-2xs'
+                    : 'bg-[var(--color-bg-secondary)] border border-[var(--color-border-primary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-card)] hover:text-[var(--color-accent)]'
+                }`}
+              >
+                #{tag.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <div className="mt-4 flex items-center justify-between border-t border-[var(--color-border-secondary)] pt-3 text-xs text-[var(--color-text-muted)]">
         <div className="flex items-center gap-2">

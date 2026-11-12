@@ -9,6 +9,8 @@ export interface TaskListProps {
   onToggleCompletion: (e: React.MouseEvent, task: Task) => void;
   onEditTask?: (e: React.MouseEvent, task: Task) => void;
   onDeleteTask: (e: React.MouseEvent, task: Task) => void;
+  onSelectTag?: (e: React.MouseEvent, task: Task, tagId: string) => void;
+  selectedTagId?: string | null;
   onCreateTask?: () => void;
   emptyMessage?: string;
 }
@@ -19,6 +21,8 @@ export const TaskList: React.FC<TaskListProps> = ({
   onToggleCompletion,
   onEditTask,
   onDeleteTask,
+  onSelectTag,
+  selectedTagId,
   onCreateTask,
   emptyMessage = 'No tasks found matching your filters.',
 }) => {
@@ -63,6 +67,8 @@ export const TaskList: React.FC<TaskListProps> = ({
               onToggleCompletion={(e) => onToggleCompletion(e, task)}
               onEdit={onEditTask ? (e) => onEditTask(e, task) : undefined}
               onDelete={(e) => onDeleteTask(e, task)}
+              onSelectTag={onSelectTag ? (e, tagId) => onSelectTag(e, task, tagId) : undefined}
+              selectedTagId={selectedTagId}
             />
           ))}
         </div>
@@ -83,6 +89,8 @@ export const TaskList: React.FC<TaskListProps> = ({
                 onToggleCompletion={(e) => onToggleCompletion(e, task)}
                 onEdit={onEditTask ? (e) => onEditTask(e, task) : undefined}
                 onDelete={(e) => onDeleteTask(e, task)}
+                onSelectTag={onSelectTag ? (e, tagId) => onSelectTag(e, task, tagId) : undefined}
+                selectedTagId={selectedTagId}
               />
             ))}
           </div>

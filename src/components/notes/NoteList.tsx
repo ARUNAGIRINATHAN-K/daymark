@@ -10,6 +10,8 @@ export interface NoteListProps {
   onToggleArchive: (e: React.MouseEvent, note: Note) => void;
   onMoveNote: (e: React.MouseEvent, note: Note) => void;
   onDeleteNote: (e: React.MouseEvent, note: Note) => void;
+  onSelectTag?: (e: React.MouseEvent, note: Note, tagId: string) => void;
+  selectedTagId?: string | null;
   onCreateNote?: () => void;
   emptyMessage?: string;
 }
@@ -21,6 +23,8 @@ export const NoteList: React.FC<NoteListProps> = ({
   onToggleArchive,
   onMoveNote,
   onDeleteNote,
+  onSelectTag,
+  selectedTagId,
   onCreateNote,
   emptyMessage = 'No notes found matching your filters.',
 }) => {
@@ -66,6 +70,8 @@ export const NoteList: React.FC<NoteListProps> = ({
                 onToggleArchive={(e) => onToggleArchive(e, note)}
                 onMove={(e) => onMoveNote(e, note)}
                 onDelete={(e) => onDeleteNote(e, note)}
+                onSelectTag={onSelectTag ? (e, tagId) => onSelectTag(e, note, tagId) : undefined}
+                selectedTagId={selectedTagId}
               />
             ))}
           </div>
@@ -93,6 +99,8 @@ export const NoteList: React.FC<NoteListProps> = ({
                 onToggleArchive={(e) => onToggleArchive(e, note)}
                 onMove={(e) => onMoveNote(e, note)}
                 onDelete={(e) => onDeleteNote(e, note)}
+                onSelectTag={onSelectTag ? (e, tagId) => onSelectTag(e, note, tagId) : undefined}
+                selectedTagId={selectedTagId}
               />
             ))}
           </div>

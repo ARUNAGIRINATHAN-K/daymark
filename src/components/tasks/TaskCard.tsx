@@ -1,7 +1,7 @@
 import React from 'react';
 import { format, isBefore, startOfDay } from 'date-fns';
 import { Calendar, CheckSquare, Clock, Folder as FolderIcon, MoreVertical, Trash2 } from 'lucide-react';
-import { useFolders } from '../../hooks/useData';
+import { useFolders, useTags } from '../../hooks/useData';
 import type { Task, TaskPriority } from '../../types';
 
 interface TaskCardProps {
@@ -10,6 +10,8 @@ interface TaskCardProps {
   onToggleCompletion: (e: React.MouseEvent) => void;
   onEdit?: (e: React.MouseEvent) => void;
   onDelete: (e: React.MouseEvent) => void;
+  onSelectTag?: (e: React.MouseEvent, tagId: string) => void;
+  selectedTagId?: string | null;
 }
 
 const PRIORITY_STYLES: Record<TaskPriority, { label: string; badge: string }> = {
@@ -37,9 +39,13 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   onToggleCompletion,
   onEdit,
   onDelete,
+  onSelectTag,
+  selectedTagId,
 }) => {
   const folders = useFolders();
+  const tags = useTags();
   const folder = task.folderId ? folders.find((f) => f.id === task.folderId) : null;
+  const taskTags = tags.filter((t) => task.tagIds.includes(t.id));
 
   const priorityStyle = PRIORITY_STYLES[task.priority] || PRIORITY_STYLES.medium;
   const isOverdue =
@@ -95,6 +101,34 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           {priorityStyle.label}
         </span>
       </div>
+
+      {/* Tag pills */}
+      {taskTags.length > 0 && (
+        <div className="mt-2 flex flex-wrap items-center gap-1">
+          {taskTags.map((tag) => {
+            const isSelected = selectedTagId === tag.id;
+            return (
+              <button
+                key={tag.id}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectTag?.(e, tag.id);
+                }}
+                aria-pressed={isSelected}
+                title={`Filter tasks by #${tag.name}`}
+                className={`rounded-md px-2 py-0.5 text-xs font-medium transition cursor-pointer ${
+                  isSelected
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-slate-100 border border-slate-200 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700'
+                }`}
+              >
+                #{tag.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Card Footer Info */}
       <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-400 dark:border-slate-800/60">

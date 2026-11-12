@@ -1,6 +1,6 @@
 import React from 'react';
-import { RotateCcw, Search, X } from 'lucide-react';
-import type { Folder, TaskPriority, TaskStatus } from '../../types';
+import { RotateCcw, Search, Tag as TagIcon, X } from 'lucide-react';
+import type { Folder, Tag, TaskPriority, TaskStatus } from '../../types';
 
 export interface TaskFiltersProps {
   searchQuery: string;
@@ -11,9 +11,12 @@ export interface TaskFiltersProps {
   onPriorityChange: (priority: TaskPriority | 'all') => void;
   selectedFolderId?: string | null;
   onFolderChange: (folderId: string | null) => void;
+  selectedTagId?: string | null;
+  onSelectTag?: (tagId: string | null) => void;
   sortBy?: 'dueDate' | 'priority' | 'title' | 'createdAt';
   onSortChange?: (sort: 'dueDate' | 'priority' | 'title' | 'createdAt') => void;
   folders: Folder[];
+  tags?: Tag[];
   onReset?: () => void;
 }
 
@@ -26,13 +29,16 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
   onPriorityChange,
   selectedFolderId,
   onFolderChange,
+  selectedTagId,
+  onSelectTag,
   sortBy = 'createdAt',
   onSortChange,
   folders,
+  tags = [],
   onReset,
 }) => {
   const hasActiveFilters = Boolean(
-    searchQuery || selectedStatus !== 'all' || selectedPriority !== 'all' || selectedFolderId
+    searchQuery || selectedStatus !== 'all' || selectedPriority !== 'all' || selectedFolderId || selectedTagId
   );
 
   return (
@@ -139,6 +145,33 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
           })}
         </div>
       </div>
+
+      {/* Tag Filter Strip */}
+      {tags.length > 0 && onSelectTag && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-xs font-medium text-slate-400 mr-1 flex items-center gap-1">
+            <TagIcon className="h-3 w-3" /> Tags:
+          </span>
+          {tags.map((t) => {
+            const isSelected = selectedTagId === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => onSelectTag(isSelected ? null : t.id)}
+                aria-pressed={isSelected}
+                className={`rounded-lg px-2 py-0.5 text-xs font-medium transition ${
+                  isSelected
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400'
+                }`}
+              >
+                #{t.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

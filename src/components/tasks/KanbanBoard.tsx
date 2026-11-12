@@ -10,6 +10,8 @@ export interface KanbanBoardProps {
   onToggleCompletion: (e: React.MouseEvent, task: Task) => void;
   onEditTask?: (e: React.MouseEvent, task: Task) => void;
   onDeleteTask: (e: React.MouseEvent, task: Task) => void;
+  onSelectTag?: (e: React.MouseEvent, task: Task, tagId: string) => void;
+  selectedTagId?: string | null;
   onCreateTaskInStatus?: (status: TaskStatus) => void;
 }
 
@@ -41,6 +43,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onToggleCompletion,
   onEditTask,
   onDeleteTask,
+  onSelectTag,
+  selectedTagId,
   onCreateTaskInStatus,
 }) => {
   return (
@@ -94,6 +98,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       onToggleCompletion={(e) => onToggleCompletion(e, task)}
                       onEdit={onEditTask ? (e) => onEditTask(e, task) : undefined}
                       onDelete={(e) => onDeleteTask(e, task)}
+                      onSelectTag={onSelectTag ? (e, tagId) => onSelectTag(e, task, tagId) : undefined}
+                      selectedTagId={selectedTagId}
                     />
 
                     {/* Quick Move Status Strip */}
