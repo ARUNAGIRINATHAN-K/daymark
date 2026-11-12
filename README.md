@@ -30,7 +30,6 @@ Notes, tasks, tags, and daily focus powered by browser IndexedDB. Zero tracking.
 
 ```bash
 bun install --frozen-lockfile
-
 bun run dev
 ```
 Open **`http://localhost:3000`**. No environment variables or external services required.
