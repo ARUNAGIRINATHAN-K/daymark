@@ -54,12 +54,12 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`group relative cursor-pointer rounded-2xl border bg-white p-4 shadow-2xs transition hover:shadow-xs dark:bg-slate-900/60 ${
+      className={`group relative cursor-pointer rounded-xl border p-4 shadow-2xs transition hover:shadow-xs bg-[var(--color-bg-card)] ${
         task.isCompleted
-          ? 'border-slate-200/60 opacity-75 dark:border-slate-800/60'
+          ? 'border-[var(--color-border-secondary)] opacity-70'
           : isOverdue
-          ? 'border-red-200 dark:border-red-900/60 hover:border-red-400'
-          : 'border-slate-200/90 hover:border-indigo-400 dark:border-slate-800 dark:hover:border-indigo-600'
+          ? 'border-red-300 dark:border-red-900/60 hover:border-red-400'
+          : 'border-[var(--color-border-primary)] hover:border-[var(--color-accent)]'
       }`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -82,7 +82,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
               {task.title}
             </h4>
             {task.description && (
-              <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+              <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
                 {task.description}
               </p>
             )}
@@ -90,14 +90,14 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         </div>
 
         <span
-          className={`shrink-0 rounded-md border px-2 py-0.5 text-[10px] font-semibold ${priorityStyle.badge}`}
+          className={`shrink-0 rounded-md border px-2 py-0.5 text-xs font-semibold ${priorityStyle.badge}`}
         >
           {priorityStyle.label}
         </span>
       </div>
 
       {/* Card Footer Info */}
-      <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-[10px] text-slate-400 dark:border-slate-800/60">
+      <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-400 dark:border-slate-800/60">
         <div className="flex items-center gap-3 flex-wrap">
           {/* Due date */}
           {task.dueDate ? (

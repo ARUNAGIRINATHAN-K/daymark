@@ -3,13 +3,12 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { format } from 'date-fns';
 import {
   AlertCircle,
-  Calendar,
+  ArrowRight,
   CheckCircle2,
-  CheckSquare,
   Clock,
   FileText,
   Plus,
-  TrendingUp,
+  Sparkles,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TaskCard } from '../components/tasks/TaskCard';
@@ -22,6 +21,7 @@ import { tasksService } from '../services/tasks.service';
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
+  const [quickCaptureText, setQuickCaptureText] = useState('');
 
   // Live query trigger when IndexedDB tables change
   const liveNotes = useLiveQuery(() => db.notes.toArray(), []) ?? [];
@@ -34,7 +34,7 @@ export const DashboardPage: React.FC = () => {
       const data = await dashboardService.getMetrics();
       setMetrics(data);
     }
-    fetchMetrics();
+    void fetchMetrics();
   }, [liveNotes, liveTasks]);
 
   const handleCreateNote = async () => {
@@ -49,247 +49,233 @@ export const DashboardPage: React.FC = () => {
     await tasksService.createTask(data);
   };
 
+  const handleQuickCaptureTask = async () => {
+    const title = quickCaptureText.trim();
+    if (!title) return;
+    await tasksService.createTask({ title, priority: 'medium' });
+    setQuickCaptureText('');
+  };
+
+  const handleQuickCaptureNote = async () => {
+    const title = quickCaptureText.trim() || 'Untitled Note';
+    const note = await notesService.createNote({
+      title,
+      content: '',
+    });
+    setQuickCaptureText('');
+    navigate(`/notes/${note.id}`);
+  };
+
+  const handleQuickCaptureKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      void handleQuickCaptureTask();
+    }
+  };
+
   const todayDateStr = format(new Date(), 'EEEE, MMMM d, yyyy');
 
+  // Derive time-of-day greeting
+  const currentHour = new Date().getHours();
+  const greeting =
+    currentHour < 12
+      ? 'Good morning'
+      : currentHour < 18
+      ? 'Good afternoon'
+      : 'Good evening';
+
+  // Combined today + urgent action items
+  const actionTasks = [
+    ...(metrics?.urgentPendingTasks ?? []),
+    ...(metrics?.todayTasks.filter((t) => !t.isCompleted && t.priority !== 'urgent' && t.priority !== 'high') ?? []),
+  ];
+  // Deduplicate by ID
+  const uniqueActionTasks = Array.from(new Map(actionTasks.map((t) => [t.id, t])).values());
+
   return (
-    <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 bg-slate-50/50 dark:bg-slate-950">
-      {/* Welcome Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200/80 pb-5 dark:border-slate-800">
+    <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 bg-[var(--color-bg-primary)] text-[var(--color-text-primary)]">
+      {/* Header & Quick Actions */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--color-border-primary)] pb-5">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Welcome back to Daymark
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--color-text-primary)]">
+            {greeting}
           </h1>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-            {todayDateStr} · Your local offline-first workspace summary
+          <p className="mt-0.5 text-sm text-[var(--color-text-muted)]">
+            {todayDateStr}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={handleCreateNote}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+            className="flex items-center gap-1.5 rounded-lg border border-[var(--color-border-primary)] bg-[var(--color-bg-card)] px-3.5 py-2 text-xs font-medium text-[var(--color-text-primary)] shadow-2xs transition hover:bg-[var(--color-bg-secondary)]"
           >
             <Plus className="h-4 w-4" />
-            Quick Note
+            New Note
           </button>
           <button
             onClick={() => setIsTaskFormOpen(true)}
-            className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-medium text-white shadow-xs transition hover:bg-indigo-700"
+            className="flex items-center gap-1.5 rounded-lg bg-[var(--color-accent)] px-3.5 py-2 text-xs font-medium text-white shadow-xs transition hover:bg-[var(--color-accent-hover)]"
           >
             <Plus className="h-4 w-4" />
-            Quick Task
+            New Task
           </button>
         </div>
       </div>
 
-      {/* Summary Multi-Card Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Completion Rate */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-2xs dark:border-slate-800 dark:bg-slate-900/60">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Task Completion
-            </span>
-            <div className="rounded-xl bg-emerald-50 p-2 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
-              <TrendingUp className="h-4 w-4" />
-            </div>
+      {/* Quick Capture Bar */}
+      <div className="rounded-xl border border-[var(--color-border-primary)] bg-[var(--color-bg-card)] p-2 shadow-2xs">
+        <div className="flex items-center gap-2">
+          <div className="pl-3 text-[var(--color-text-muted)]">
+            <Sparkles className="h-4 w-4" />
           </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="font-mono text-2xl font-bold text-slate-900 dark:text-white">
-              {metrics?.completionRate ?? 0}%
-            </span>
-            <span className="text-[10px] text-slate-400">
-              ({metrics?.completedTasks ?? 0}/{metrics?.totalTasks ?? 0} done)
-            </span>
-          </div>
-          {/* Progress bar */}
-          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-            <div
-              className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-              style={{ width: `${metrics?.completionRate ?? 0}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Pending Tasks */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-2xs dark:border-slate-800 dark:bg-slate-900/60">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Pending Workflows
-            </span>
-            <div className="rounded-xl bg-indigo-50 p-2 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
-              <CheckSquare className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="font-mono text-2xl font-bold text-slate-900 dark:text-white">
-              {metrics?.pendingTasks ?? 0}
-            </span>
-            <span className="text-[10px] text-slate-400">active tasks</span>
-          </div>
-        </div>
-
-        {/* Overdue Count */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-2xs dark:border-slate-800 dark:bg-slate-900/60">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Overdue Tasks
-            </span>
-            <div className="rounded-xl bg-red-50 p-2 text-red-600 dark:bg-red-950/40 dark:text-red-400">
-              <AlertCircle className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span
-              className={`font-mono text-2xl font-bold ${
-                (metrics?.overdueTasks ?? 0) > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-900 dark:text-white'
-              }`}
+          <input
+            type="text"
+            value={quickCaptureText}
+            onChange={(e) => setQuickCaptureText(e.target.value)}
+            onKeyDown={handleQuickCaptureKeyDown}
+            placeholder="Quick capture: type a thought or task and press Enter..."
+            className="flex-1 bg-transparent px-2 py-2 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] outline-none"
+          />
+          <div className="flex items-center gap-1 pr-1">
+            <button
+              onClick={handleQuickCaptureTask}
+              disabled={!quickCaptureText.trim()}
+              className="rounded-lg bg-[var(--color-bg-secondary)] px-3 py-1.5 text-xs font-medium text-[var(--color-text-primary)] transition hover:bg-[var(--color-border-primary)] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+              title="Add as Task"
             >
-              {metrics?.overdueTasks ?? 0}
-            </span>
-            <span className="text-[10px] text-slate-400">needs attention</span>
-          </div>
-        </div>
-
-        {/* Active Notes */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-2xs dark:border-slate-800 dark:bg-slate-900/60">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Total Notes
-            </span>
-            <div className="rounded-xl bg-amber-50 p-2 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
-              <FileText className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="font-mono text-2xl font-bold text-slate-900 dark:text-white">
-              {metrics?.totalNotes ?? 0}
-            </span>
-            <span className="text-[10px] text-slate-400">indexed documents</span>
+              + Task
+            </button>
+            <button
+              onClick={handleQuickCaptureNote}
+              disabled={!quickCaptureText.trim()}
+              className="rounded-lg bg-[var(--color-bg-secondary)] px-3 py-1.5 text-xs font-medium text-[var(--color-text-primary)] transition hover:bg-[var(--color-border-primary)] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+              title="Add as Note"
+            >
+              + Note
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Main Grid: Urgent Workflows & Upcoming Deadlines */}
+      {/* Main Two-Column Canvas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Urgent & High Priority Tasks */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-2xs space-y-4 dark:border-slate-800 dark:bg-slate-900/60">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
-            <h3 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-amber-500" /> Urgent & High Priority Tasks
-            </h3>
+        {/* Left Column: Today's Action Items */}
+        <div className="rounded-xl border border-[var(--color-border-primary)] bg-[var(--color-bg-card)] p-5 shadow-2xs space-y-4">
+          <div className="flex items-center justify-between border-b border-[var(--color-border-secondary)] pb-3">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-[var(--color-accent)]" />
+              <h2 className="text-sm font-bold text-[var(--color-text-primary)]">
+                Today's Focus
+              </h2>
+              {uniqueActionTasks.length > 0 && (
+                <span className="rounded-full bg-[var(--color-accent-subtle)] px-2 py-0.5 font-mono text-xs font-semibold text-[var(--color-accent)]">
+                  {uniqueActionTasks.length}
+                </span>
+              )}
+            </div>
             <button
               onClick={() => navigate('/tasks')}
-              className="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+              className="flex items-center gap-1 text-xs font-medium text-[var(--color-accent)] hover:underline"
             >
-              View All Tasks
+              All Tasks
+              <ArrowRight className="h-3 w-3" />
             </button>
           </div>
 
-          {!metrics?.urgentPendingTasks || metrics.urgentPendingTasks.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-400 italic">
-              No urgent or high priority tasks pending.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {metrics.urgentPendingTasks.slice(0, 4).map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onClick={() => navigate(`/tasks/${task.id}`)}
-                  onToggleCompletion={async (e) => {
-                    e.stopPropagation();
-                    await tasksService.toggleCompletion(task.id);
-                  }}
-                  onDelete={async (e) => {
-                    e.stopPropagation();
-                    await tasksService.softDeleteTask(task.id);
-                  }}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Upcoming Deadlines (Next 7 Days) */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-2xs space-y-4 dark:border-slate-800 dark:bg-slate-900/60">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
-            <h3 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Clock className="h-4 w-4 text-indigo-500" /> Upcoming Deadlines (Next 7 Days)
-            </h3>
-            <button
-              onClick={() => navigate('/upcoming')}
-              className="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-            >
-              Full Calendar
-            </button>
-          </div>
-
-          {!metrics?.upcomingDeadlines || metrics.upcomingDeadlines.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-400 italic">
-              No upcoming task deadlines scheduled for the next 7 days.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {metrics.upcomingDeadlines.slice(0, 4).map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onClick={() => navigate(`/tasks/${task.id}`)}
-                  onToggleCompletion={async (e) => {
-                    e.stopPropagation();
-                    await tasksService.toggleCompletion(task.id);
-                  }}
-                  onDelete={async (e) => {
-                    e.stopPropagation();
-                    await tasksService.softDeleteTask(task.id);
-                  }}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Recent Notes Section */}
-      <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-2xs space-y-4 dark:border-slate-800 dark:bg-slate-900/60">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
-          <h3 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <FileText className="h-4 w-4 text-indigo-500" /> Recent Notes
-          </h3>
-          <button
-            onClick={() => navigate('/notes')}
-            className="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-          >
-            All Notes
-          </button>
-        </div>
-
-        {!metrics?.recentNotes || metrics.recentNotes.length === 0 ? (
-          <div className="py-8 text-center text-xs text-slate-400 italic">
-            No notes created yet.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
-            {metrics.recentNotes.map((note) => (
-              <div
-                key={note.id}
-                onClick={() => navigate(`/notes/${note.id}`)}
-                className="cursor-pointer rounded-xl border border-slate-200/80 bg-slate-50/50 p-3 hover:border-indigo-400 transition dark:border-slate-800 dark:bg-slate-950/40"
-              >
-                <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                  {note.title || 'Untitled Note'}
-                </h4>
-                <p className="mt-1 line-clamp-2 text-[10px] text-slate-500 dark:text-slate-400">
-                  {note.content.replace(/[#*`_>-]/g, '').trim() || 'No preview content'}
-                </p>
-                <span className="mt-2 block text-[9px] font-mono text-slate-400">
-                  {format(note.updatedAt, 'MMM d')}
+          {/* Overdue alert strip if present */}
+          {(metrics?.overdueTasks ?? 0) > 0 && (
+            <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50/60 p-3 text-xs text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />
+                <span>
+                  <strong>{metrics?.overdueTasks}</strong> overdue task{(metrics?.overdueTasks ?? 0) === 1 ? '' : 's'} need attention.
                 </span>
               </div>
-            ))}
+              <button
+                onClick={() => navigate('/today')}
+                className="font-medium underline hover:text-red-950 dark:hover:text-red-100"
+              >
+                Review
+              </button>
+            </div>
+          )}
+
+          {uniqueActionTasks.length === 0 ? (
+            <div className="py-12 text-center text-xs text-[var(--color-text-muted)] space-y-2">
+              <CheckCircle2 className="mx-auto h-8 w-8 text-emerald-500 opacity-80" />
+              <p className="font-medium text-[var(--color-text-primary)]">All clear for today</p>
+              <p>No urgent deadlines pending. Capture a new task above or relax.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {uniqueActionTasks.slice(0, 5).map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  onClick={() => navigate(`/tasks/${task.id}`)}
+                  onToggleCompletion={async (e) => {
+                    e.stopPropagation();
+                    await tasksService.toggleCompletion(task.id);
+                  }}
+                  onDelete={async (e) => {
+                    e.stopPropagation();
+                    await tasksService.softDeleteTask(task.id);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Right Column: Recent Thinking / Notes */}
+        <div className="rounded-xl border border-[var(--color-border-primary)] bg-[var(--color-bg-card)] p-5 shadow-2xs space-y-4">
+          <div className="flex items-center justify-between border-b border-[var(--color-border-secondary)] pb-3">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-[var(--color-accent)]" />
+              <h2 className="text-sm font-bold text-[var(--color-text-primary)]">
+                Recent Notes
+              </h2>
+            </div>
+            <button
+              onClick={() => navigate('/notes')}
+              className="flex items-center gap-1 text-xs font-medium text-[var(--color-accent)] hover:underline"
+            >
+              All Notes
+              <ArrowRight className="h-3 w-3" />
+            </button>
           </div>
-        )}
+
+          {!metrics?.recentNotes || metrics.recentNotes.length === 0 ? (
+            <div className="py-12 text-center text-xs text-[var(--color-text-muted)] space-y-2">
+              <FileText className="mx-auto h-8 w-8 text-[var(--color-text-muted)] opacity-60" />
+              <p className="font-medium text-[var(--color-text-primary)]">No notes yet</p>
+              <p>Capture your first note using the quick capture bar above.</p>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {metrics.recentNotes.map((note) => (
+                <div
+                  key={note.id}
+                  onClick={() => navigate(`/notes/${note.id}`)}
+                  className="group cursor-pointer rounded-lg border border-[var(--color-border-secondary)] bg-[var(--color-bg-secondary)] p-3.5 transition hover:border-[var(--color-accent)] hover:shadow-2xs"
+                >
+                  <div className="flex items-baseline justify-between gap-2">
+                    <h3 className="text-xs font-bold text-[var(--color-text-primary)] group-hover:text-[var(--color-accent)] line-clamp-1 transition">
+                      {note.title || 'Untitled Note'}
+                    </h3>
+                    <span className="font-mono text-xs text-[var(--color-text-muted)] shrink-0">
+                      {format(note.updatedAt, 'MMM d')}
+                    </span>
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-xs text-[var(--color-text-secondary)]">
+                    {note.content.replace(/[#*`_>-]/g, '').trim() || 'No preview text'}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Quick Task Modal */}
@@ -301,3 +287,5 @@ export const DashboardPage: React.FC = () => {
     </div>
   );
 };
+
+export default DashboardPage;

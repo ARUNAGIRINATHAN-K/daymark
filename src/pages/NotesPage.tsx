@@ -68,21 +68,21 @@ export const NotesPage: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 bg-slate-50/50 dark:bg-slate-950">
+    <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 bg-[var(--color-bg-primary)] text-[var(--color-text-primary)]">
       {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200/80 pb-5 dark:border-slate-800">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--color-border-primary)] pb-5">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="text-xl font-bold tracking-tight text-[var(--color-text-primary)]">
             All Notes
           </h1>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-            {notes.length} {notes.length === 1 ? 'note' : 'notes'} available offline in IndexedDB
+          <p className="mt-0.5 text-sm text-[var(--color-text-muted)]">
+            {notes.length} {notes.length === 1 ? 'note' : 'notes'}
           </p>
         </div>
 
         <button
           onClick={handleCreateNote}
-          className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-medium text-white shadow-xs transition hover:bg-indigo-700"
+          className="flex items-center gap-1.5 rounded-lg bg-[var(--color-accent)] px-3.5 py-2 text-xs font-medium text-white shadow-xs transition hover:bg-[var(--color-accent-hover)]"
         >
           <Plus className="h-4 w-4" />
           New Note

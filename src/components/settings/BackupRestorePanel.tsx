@@ -98,7 +98,7 @@ export const BackupRestorePanel: React.FC<{ onRestoredPreferences?: (sortBy: Tas
         <input ref={fileInput} type="file" accept="application/json,.json" onChange={(event) => void handleFile(event)} className="hidden" aria-label="Choose a Daymark backup JSON file" />
       </div>
 
-      <p className="mt-3 text-[11px] text-slate-500 dark:text-slate-400">
+      <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
         Version 1 includes all notes, tasks, folders, tags, theme/task-sort preferences, and unsynced outbox operations. It excludes secrets, resolved or unresolved conflicts, remote revision baselines, cursors, and retry history. Only version 1 Daymark backups are supported.
       </p>
 

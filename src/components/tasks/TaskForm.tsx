@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Calendar, CheckSquare, Plus, Trash2, X } from 'lucide-react';
+import { Calendar, CheckSquare, Plus, X } from 'lucide-react';
 import { useFolders, useTags } from '../../hooks/useData';
+import { SubtaskChecklist } from './SubtaskChecklist';
 import type { CreateTaskInput, Subtask, Task, TaskPriority, TaskStatus, UpdateTaskInput } from '../../types';
 
 interface TaskFormProps {
@@ -282,43 +283,19 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                 <CheckSquare className="h-3 w-3 text-indigo-500" /> Subtasks / Checklist
               </span>
               {subtasks.length > 0 && (
-                <span className="font-mono text-[10px] text-slate-400">
+                <span className="font-mono text-xs text-slate-400">
                   {subtasks.filter((s) => s.isCompleted).length}/{subtasks.length} done
                 </span>
               )}
             </label>
 
-            <div className="mt-2 space-y-1.5 max-h-36 overflow-y-auto">
-              {subtasks.map((subtask) => (
-                <div
-                  key={subtask.id}
-                  className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/70 p-2 text-xs dark:border-slate-800 dark:bg-slate-950/40"
-                >
-                  <label className="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
-                    <input
-                      type="checkbox"
-                      checked={subtask.isCompleted}
-                      onChange={() => handleToggleSubtask(subtask.id)}
-                      className="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                    />
-                    <span
-                      className={`truncate ${
-                        subtask.isCompleted ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200'
-                      }`}
-                    >
-                      {subtask.title}
-                    </span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveSubtask(subtask.id)}
-                    className="p-1 text-slate-400 hover:text-red-500"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
+            <SubtaskChecklist
+              subtasks={subtasks}
+              onToggle={handleToggleSubtask}
+              onRemove={handleRemoveSubtask}
+              onReorder={setSubtasks}
+              compact
+            />
 
             <div className="mt-2 flex items-center gap-2">
               <input

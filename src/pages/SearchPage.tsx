@@ -40,30 +40,30 @@ export const SearchPage: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 bg-slate-50/50 dark:bg-slate-950">
-      <div className="border-b border-slate-200/80 pb-5 dark:border-slate-800">
-        <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+    <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 bg-[var(--color-bg-primary)] text-[var(--color-text-primary)]">
+      <div className="border-b border-[var(--color-border-primary)] pb-5">
+        <h1 className="text-xl font-bold tracking-tight text-[var(--color-text-primary)]">
           Global Search
         </h1>
-        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-          Find notes, tasks, checklists, and snippets instantly across IndexedDB
+        <p className="mt-0.5 text-sm text-[var(--color-text-muted)]">
+          Find notes, tasks, and checklists instantly
         </p>
 
         {/* Search Bar Input */}
         <div className="relative mt-4">
-          <Search className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-4 top-3.5 h-4 w-4 text-[var(--color-text-muted)]" />
           <input
             type="text"
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Type keywords to search across all notes and tasks..."
-            className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-11 pr-10 text-sm text-slate-900 shadow-2xs outline-none transition focus:border-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+            className="w-full rounded-xl border border-[var(--color-border-primary)] bg-[var(--color-bg-card)] py-3 pl-11 pr-10 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] shadow-2xs outline-none transition focus:border-[var(--color-accent)]"
           />
           {query && (
             <button
               onClick={() => setQuery('')}
-              className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              className="absolute right-3.5 top-3.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] cursor-pointer"
             >
               <X className="h-4 w-4" />
             </button>
@@ -76,10 +76,10 @@ export const SearchPage: React.FC = () => {
             <button
               key={type}
               onClick={() => setFilterType(type)}
-              className={`rounded-lg px-3 py-1 text-xs font-medium capitalize transition ${
+              className={`rounded-lg px-3 py-1 text-xs font-medium capitalize transition cursor-pointer ${
                 filterType === type
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400'
+                  ? 'bg-[var(--color-accent)] text-white'
+                  : 'bg-[var(--color-bg-card)] border border-[var(--color-border-primary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-secondary)]'
               }`}
             >
               {type === 'all' ? `All Results (${totalMatches})` : type}
@@ -91,7 +91,7 @@ export const SearchPage: React.FC = () => {
       {/* Results View */}
       {!q ? (
         <div className="rounded-2xl border border-dashed border-slate-200 py-16 text-center text-xs text-slate-400 dark:border-slate-800">
-          Type search keywords in the input above to explore your offline database.
+          Type keywords above to search your notes and tasks.
         </div>
       ) : totalMatches === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-200 py-16 text-center text-xs text-slate-400 dark:border-slate-800">
@@ -112,18 +112,18 @@ export const SearchPage: React.FC = () => {
                     <div
                       key={note.id}
                       onClick={() => navigate(`/notes/${note.id}`)}
-                      className="cursor-pointer rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs transition hover:border-indigo-400 dark:border-slate-800 dark:bg-slate-900/60"
+                      className="cursor-pointer rounded-xl border border-[var(--color-border-primary)] bg-[var(--color-bg-card)] p-4 shadow-2xs transition hover:border-[var(--color-accent)]"
                     >
                       <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-indigo-500" />
-                        <h4 className="text-xs font-bold text-slate-900 dark:text-white line-clamp-1">
+                        <FileText className="h-4 w-4 text-[var(--color-accent)]" />
+                        <h4 className="text-xs font-bold text-[var(--color-text-primary)] line-clamp-1">
                           {note.title}
                         </h4>
                       </div>
-                      <p className="mt-1 line-clamp-2 text-[11px] text-slate-500 dark:text-slate-400">
+                      <p className="mt-1 line-clamp-2 text-xs text-[var(--color-text-secondary)]">
                         {note.content.replace(/[#*`_>-]/g, '').trim()}
                       </p>
-                      <div className="mt-3 flex items-center justify-between text-[10px] text-slate-400">
+                      <div className="mt-3 flex items-center justify-between text-xs text-[var(--color-text-muted)]">
                         <span className="font-mono tabular-nums">{format(note.updatedAt, 'MMM d, yyyy')}</span>
                         {folder && <span>{folder.name}</span>}
                       </div>
@@ -137,15 +137,15 @@ export const SearchPage: React.FC = () => {
           {/* Tasks Matches */}
           {(filterType === 'all' || filterType === 'tasks') && matchedTasks.length > 0 && (
             <div className="space-y-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
                 Tasks ({matchedTasks.length})
               </h3>
-              <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200/90 bg-white shadow-2xs dark:divide-slate-800/60 dark:border-slate-800 dark:bg-slate-900/60">
+              <div className="divide-y divide-[var(--color-border-secondary)] rounded-xl border border-[var(--color-border-primary)] bg-[var(--color-bg-card)] shadow-2xs">
                 {matchedTasks.map((task) => (
                   <div
                     key={task.id}
                     onClick={() => navigate(`/tasks/${task.id}`)}
-                    className="flex items-center justify-between p-3.5 transition cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
+                    className="flex items-center justify-between p-3.5 transition cursor-pointer hover:bg-[var(--color-bg-secondary)]"
                   >
                     <div className="flex items-center gap-2.5">
                       <CheckCircle2
@@ -157,7 +157,7 @@ export const SearchPage: React.FC = () => {
                         {task.title}
                       </span>
                     </div>
-                    <span className="text-[10px] uppercase font-semibold text-slate-400">
+                    <span className="text-xs uppercase font-semibold text-slate-400">
                       {task.priority}
                     </span>
                   </div>

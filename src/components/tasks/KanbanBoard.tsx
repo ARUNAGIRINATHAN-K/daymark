@@ -54,7 +54,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         return (
           <div
             key={col.status}
-            className={`flex flex-col rounded-2xl border p-4 shadow-2xs ${col.color}`}
+            className={`flex flex-col rounded-xl border p-4 shadow-2xs ${col.color}`}
           >
             {/* Column Header */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-200/60 dark:border-slate-800">
@@ -63,7 +63,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 <h3 className="text-xs font-bold text-slate-900 dark:text-white">
                   {col.label}
                 </h3>
-                <span className="rounded-full bg-white px-2 py-0.5 font-mono text-[10px] font-bold text-slate-600 shadow-2xs dark:bg-slate-800 dark:text-slate-300">
+                <span className="rounded-full bg-white px-2 py-0.5 font-mono text-xs font-bold text-slate-600 shadow-2xs dark:bg-slate-800 dark:text-slate-300">
                   {colTasks.length}
                 </span>
               </div>
@@ -98,7 +98,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
                     {/* Quick Move Status Strip */}
                     <div className="mt-1 flex items-center justify-end gap-1 opacity-0 group-hover/kanban:opacity-100 transition-opacity">
-                      <span className="text-[9px] font-medium text-slate-400 flex items-center gap-0.5 mr-1">
+                      <span className="text-xs font-medium text-slate-400 flex items-center gap-0.5 mr-1">
                         <ArrowLeftRight className="h-2.5 w-2.5" /> Move:
                       </span>
                       {COLUMNS.filter((c) => c.status !== col.status).map((targetCol) => (
@@ -108,7 +108,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                             e.stopPropagation();
                             onUpdateStatus(task.id, targetCol.status);
                           }}
-                          className="rounded bg-white border border-slate-200 px-1.5 py-0.5 text-[9px] font-semibold text-slate-600 hover:border-indigo-400 hover:text-indigo-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 dark:hover:text-indigo-400"
+                          className="rounded bg-white border border-slate-200 px-1.5 py-0.5 text-xs font-semibold text-slate-600 hover:border-indigo-400 hover:text-indigo-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 dark:hover:text-indigo-400"
                         >
                           {targetCol.label}
                         </button>

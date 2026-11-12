@@ -136,11 +136,11 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task }) => {
 
         <div className="flex items-center gap-2">
           {isSaved ? (
-            <span className="font-mono text-[11px] text-emerald-600 dark:text-emerald-400">
+            <span className="font-mono text-xs text-emerald-600 dark:text-emerald-400">
               ✓ Saved locally
             </span>
           ) : (
-            <span className="font-mono text-[11px] text-amber-600 dark:text-amber-400 animate-pulse">
+            <span className="font-mono text-xs text-amber-600 dark:text-amber-400 animate-pulse">
               Saving...
             </span>
           )}
@@ -177,7 +177,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task }) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-xl border border-slate-100 bg-slate-50/60 p-4 dark:border-slate-800/80 dark:bg-slate-900/40">
             {/* Priority Selector */}
             <div>
-              <label className="text-[11px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <label className="text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 Priority
               </label>
               <div className="mt-1.5 flex items-center gap-1">
@@ -208,7 +208,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task }) => {
 
             {/* Folder Selector */}
             <div>
-              <label className="text-[11px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <label className="text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 Folder
               </label>
               <div className="mt-1.5 flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-800 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
@@ -230,7 +230,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task }) => {
 
             {/* Due Date Presets & Picker */}
             <div className="sm:col-span-2">
-              <label className="text-[11px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <label className="text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 Due Date
               </label>
               <div className="mt-1.5 flex flex-wrap items-center gap-2">
@@ -275,7 +275,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task }) => {
 
             {/* Tags */}
             <div className="sm:col-span-2">
-              <label className="text-[11px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <label className="text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 Tags
               </label>
               <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
@@ -317,7 +317,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task }) => {
           {/* Linked Note (if applicable) */}
           {linkedNote && (
             <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 dark:border-indigo-950/60 dark:bg-indigo-950/20">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+              <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
                 Linked Note
               </span>
               <div className="mt-2 flex items-center justify-between">
@@ -325,7 +325,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task }) => {
                   <h4 className="text-xs font-semibold text-slate-900 dark:text-white">
                     {linkedNote.title}
                   </h4>
-                  <p className="line-clamp-1 text-[11px] text-slate-500 dark:text-slate-400">
+                  <p className="line-clamp-1 text-xs text-slate-500 dark:text-slate-400">
                     {linkedNote.content.substring(0, 80)}
                   </p>
                 </div>
@@ -342,7 +342,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task }) => {
           )}
 
           {/* Timestamps */}
-          <div className="border-t border-slate-100 pt-4 text-[11px] text-slate-400 dark:border-slate-800">
+          <div className="border-t border-slate-100 pt-4 text-xs text-slate-400 dark:border-slate-800">
             <p>Created: {format(task.createdAt, 'PPP · p')}</p>
             {task.completedAt && <p>Completed: {format(task.completedAt, 'PPP · p')}</p>}
           </div>

@@ -120,7 +120,7 @@ export const OutboxInspectorModal: React.FC = () => {
               <p className="mt-3 text-xs font-medium text-slate-500 dark:text-slate-400">
                 Outbox queue is empty.
               </p>
-              <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
+              <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
                 Create or edit a note or task to see transactional operations recorded here.
               </p>
             </div>
@@ -152,23 +152,23 @@ export const OutboxInspectorModal: React.FC = () => {
                           <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
                         )}
                         <span
-                          className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${actionColor}`}
+                          className={`rounded border px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wider ${actionColor}`}
                         >
                           {op.action}
                         </span>
                         <span className="font-semibold text-slate-800 dark:text-slate-200">
                           {op.entityType}
                         </span>
-                        <span className="font-mono text-[11px] text-slate-400 dark:text-slate-500">
+                        <span className="font-mono text-xs text-slate-400 dark:text-slate-500">
                           {op.entityId.substring(0, 16)}...
                         </span>
                       </div>
 
                       <div className="flex items-center gap-3">
-                        <span className="font-mono text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
+                        <span className="font-mono text-xs tabular-nums text-slate-400 dark:text-slate-500">
                           {format(op.timestamp, 'HH:mm:ss')}
                         </span>
-                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                           status === 'completed' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300' :
                           status === 'failed' ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300' :
                           status === 'processing' ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300' :
@@ -180,12 +180,12 @@ export const OutboxInspectorModal: React.FC = () => {
                     </button>
 
                     {isExpanded && (
-                      <div className="border-t border-slate-100 bg-slate-50/80 p-3 font-mono text-[11px] text-slate-700 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-300">
-                        <div className="mb-2 flex items-center justify-between text-[10px] text-slate-500">
+                      <div className="border-t border-slate-100 bg-slate-50/80 p-3 font-mono text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-300">
+                        <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
                           <span>Operation ID: {op.id}</span>
                           <span>Timestamp: {new Date(op.timestamp).toISOString()}</span>
                         </div>
-                        <div className="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-slate-500">
+                        <div className="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
                           <span>Idempotency key: {op.id}</span>
                           <span>Attempts: {attemptCount}</span>
                           {nextRetryAt !== null && <span>Next retry: {format(nextRetryAt, 'yyyy-MM-dd HH:mm:ss')}</span>}

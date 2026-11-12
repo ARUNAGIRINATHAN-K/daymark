@@ -76,7 +76,7 @@ export const TagDialog: React.FC = () => {
               placeholder="e.g. urgent, draft, reading, client"
               className="mt-1.5 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none transition focus:border-indigo-500 focus:bg-white dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-indigo-400"
             />
-            {error && <p className="mt-1 text-[11px] text-red-500">{error}</p>}
+            {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
           </div>
 
           <div>

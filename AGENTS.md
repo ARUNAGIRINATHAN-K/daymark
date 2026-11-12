@@ -183,5 +183,5 @@ Use the checked-in Bun lockfile and frozen install for reproducible dependencies
 
 - Update the relevant docs whenever an approved change affects architecture, data contracts, schema/migrations, offline/PWA behavior, feature status, or development commands.
 - Keep documentation factual and distinguish implementation from UI-only, planned, or runtime-unverified behavior.
-- Project documentation is maintained across three consolidated root Markdown files: `README.md` (overview, development, testing, deployment, docker, limitations), `ARCHITECTURE.md` (system architecture, data flows, database schema, and migration rules), and `AGENTS.md` (agent instructions and pair programming constraints).
+- Project documentation is maintained across four root Markdown files: `README.md` (overview, development, testing, deployment, docker, limitations), `ARCHITECTURE.md` (system architecture, data flows, database schema, and migration rules), `CONTRIBUTING.md` (contributor guide, conventions, and roadmap ideas), and `AGENTS.md` (agent instructions and pair programming constraints).
 - Update this `AGENTS.md` when its instructions or the verified architecture change.

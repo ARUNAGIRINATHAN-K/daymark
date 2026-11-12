@@ -107,7 +107,7 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
             <button
               key={st}
               onClick={() => onStatusChange(st)}
-              className={`rounded-lg px-2.5 py-1 text-[11px] font-medium capitalize transition ${
+              className={`rounded-lg px-2.5 py-1 text-xs font-medium capitalize transition ${
                 selectedStatus === st
                   ? 'bg-white text-slate-900 shadow-2xs dark:bg-slate-800 dark:text-white'
                   : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
@@ -120,14 +120,14 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
 
         {/* Priority Filter Strip */}
         <div className="flex items-center gap-1">
-          <span className="text-[11px] font-medium text-slate-400 mr-1">Priority:</span>
+          <span className="text-xs font-medium text-slate-400 mr-1">Priority:</span>
           {(['all', 'urgent', 'high', 'medium', 'low'] as const).map((pr) => {
             const isSelected = selectedPriority === pr;
             return (
               <button
                 key={pr}
                 onClick={() => onPriorityChange(pr)}
-                className={`rounded-lg px-2 py-0.5 text-[11px] font-medium capitalize transition ${
+                className={`rounded-lg px-2 py-0.5 text-xs font-medium capitalize transition ${
                   isSelected
                     ? 'bg-indigo-600 text-white'
                     : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400'
