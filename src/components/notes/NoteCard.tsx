@@ -1,8 +1,8 @@
 import React from 'react';
-import { format } from 'date-fns';
 import { Archive, Folder as FolderIcon, MoveRight, Pin, Trash2 } from 'lucide-react';
 import { useFolders } from '../../hooks/useData';
 import type { Note } from '../../types';
+import { formatExactTimestamp, formatShortDate } from '../../utils/date.utils';
 
 interface NoteCardProps {
   note: Note;
@@ -23,6 +23,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({
 }) => {
   const folders = useFolders();
   const folder = note.folderId ? folders.find((f) => f.id === note.folderId) : null;
+  const exactUpdatedAt = formatExactTimestamp(note.updatedAt);
 
   return (
     <div
@@ -52,7 +53,14 @@ export const NoteCard: React.FC<NoteCardProps> = ({
 
       <div className="mt-4 flex items-center justify-between border-t border-[var(--color-border-secondary)] pt-3 text-xs text-[var(--color-text-muted)]">
         <div className="flex items-center gap-2">
-          <span className="font-mono tabular-nums">{format(note.updatedAt, 'MMM d')}</span>
+          <span
+            className="font-mono tabular-nums"
+            title={exactUpdatedAt ?? undefined}
+            tabIndex={exactUpdatedAt ? 0 : undefined}
+            aria-label={exactUpdatedAt ? `Last updated ${exactUpdatedAt}` : undefined}
+          >
+            {formatShortDate(note.updatedAt)}
+          </span>
           {folder && (
             <span className="flex items-center gap-1 font-medium text-[var(--color-text-secondary)]">
               <span
