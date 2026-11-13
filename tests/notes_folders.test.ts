@@ -211,6 +211,23 @@ describe('Master Prompt 04: Notes, Folders & Tags Business Logic', () => {
       expect(tagMatches[0].id).toBe(noteC.id);
     });
 
+    it('filters notes by tagId when applied and returns the unfiltered list when cleared', async () => {
+      const tag = await tagsService.createTag({ name: 'work' });
+      const otherTag = await tagsService.createTag({ name: 'personal' });
+
+      const tagged = await notesService.createNote({ title: 'Tagged', tagIds: [tag.id] });
+      const otherTagged = await notesService.createNote({ title: 'Other Tagged', tagIds: [otherTag.id] });
+      await notesService.createNote({ title: 'Untagged' });
+
+      const filtered = await notesService.getNotes({ tagId: tag.id });
+      expect(filtered.length).toBe(1);
+      expect(filtered[0].id).toBe(tagged.id);
+      expect(filtered.map((n) => n.id)).not.toContain(otherTagged.id);
+
+      const cleared = await notesService.getNotes({ tagId: null });
+      expect(cleared.length).toBe(3);
+    });
+
     it('attaches and removes tags from notes and logs atomic outbox transactions', async () => {
       const tag1 = await tagsService.createTag({ name: 'urgent' });
       const tag2 = await tagsService.createTag({ name: 'review' });

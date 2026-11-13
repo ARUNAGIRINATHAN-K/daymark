@@ -61,6 +61,11 @@ export const NotesPage: React.FC = () => {
     }
   };
 
+  const handleSelectTag = (e: React.MouseEvent, _note: Note, tagId: string) => {
+    e.stopPropagation();
+    setSelectedTagId((prev) => (prev === tagId ? null : tagId));
+  };
+
   const handleResetFilters = () => {
     setSearchQuery('');
     setSelectedFolderId(null);
@@ -110,6 +115,8 @@ export const NotesPage: React.FC = () => {
         onToggleArchive={handleToggleArchive}
         onMoveNote={handleMoveNote}
         onDeleteNote={handleDeleteNote}
+        onSelectTag={handleSelectTag}
+        selectedTagId={selectedTagId}
         onCreateNote={handleCreateNote}
       />
 

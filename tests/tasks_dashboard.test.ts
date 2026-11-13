@@ -4,6 +4,7 @@ import { db } from '../src/db/database';
 import { dashboardService } from '../src/services/dashboard.service';
 import { notesService } from '../src/services/notes.service';
 import { tasksService } from '../src/services/tasks.service';
+import { tagsService } from '../src/services/tags.service';
 
 describe('Master Prompt 05: Task Management & Dashboard Metrics', () => {
   beforeEach(async () => {
@@ -133,6 +134,25 @@ describe('Master Prompt 05: Task Management & Dashboard Metrics', () => {
       expect(stored.isCompleted).toBe(true);
       expect(stored.status).toBe('completed');
       expect(stored.completedAt).toBeTypeOf('number');
+    });
+  });
+
+  describe('Tag Filtering', () => {
+    it('filters tasks by tagId when applied and returns the unfiltered list when cleared', async () => {
+      const tag = await tagsService.createTag({ name: 'work' });
+      const otherTag = await tagsService.createTag({ name: 'personal' });
+
+      const tagged = await tasksService.createTask({ title: 'Tagged', tagIds: [tag.id] });
+      const otherTagged = await tasksService.createTask({ title: 'Other Tagged', tagIds: [otherTag.id] });
+      await tasksService.createTask({ title: 'Untagged' });
+
+      const filtered = await tasksService.getTasks({ tagId: tag.id });
+      expect(filtered.length).toBe(1);
+      expect(filtered[0].id).toBe(tagged.id);
+      expect(filtered.map((t) => t.id)).not.toContain(otherTagged.id);
+
+      const cleared = await tasksService.getTasks({ tagId: null });
+      expect(cleared.length).toBe(3);
     });
   });
 

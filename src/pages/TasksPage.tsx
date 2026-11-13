@@ -6,7 +6,7 @@ import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskFilters } from '../components/tasks/TaskFilters';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { TaskList } from '../components/tasks/TaskList';
-import { useFolders } from '../hooks/useData';
+import { useFolders, useTags } from '../hooks/useData';
 import { useTasks } from '../hooks/useTasks';
 import type { Task, TaskPriority, TaskStatus } from '../types';
 import { settingsService } from '../services/settings.service';
@@ -15,12 +15,14 @@ import type { TaskSortBy } from '../schemas/settings.schema';
 export const TasksPage: React.FC = () => {
   const navigate = useNavigate();
   const folders = useFolders();
+  const tags = useTags();
 
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<TaskStatus | 'all'>('all');
   const [selectedPriority, setSelectedPriority] = useState<TaskPriority | 'all'>('all');
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<TaskSortBy>('createdAt');
 
   useEffect(() => {
@@ -42,6 +44,7 @@ export const TasksPage: React.FC = () => {
       status: selectedStatus === 'all' ? undefined : selectedStatus,
       priority: selectedPriority === 'all' ? undefined : selectedPriority,
       folderId: selectedFolderId || undefined,
+      tagId: selectedTagId || undefined,
       sortBy,
     });
 
@@ -76,11 +79,17 @@ export const TasksPage: React.FC = () => {
     await softDeleteTask(task.id);
   };
 
+  const handleSelectTag = (e: React.MouseEvent, _task: Task, tagId: string) => {
+    e.stopPropagation();
+    setSelectedTagId((prev) => (prev === tagId ? null : tagId));
+  };
+
   const handleResetFilters = () => {
     setSearchQuery('');
     setSelectedStatus('all');
     setSelectedPriority('all');
     setSelectedFolderId(null);
+    setSelectedTagId(null);
     setSortBy('createdAt');
   };
 
@@ -144,9 +153,12 @@ export const TasksPage: React.FC = () => {
         onPriorityChange={setSelectedPriority}
         selectedFolderId={selectedFolderId}
         onFolderChange={setSelectedFolderId}
+        selectedTagId={selectedTagId}
+        onSelectTag={setSelectedTagId}
         sortBy={sortBy}
         onSortChange={setSortBy}
         folders={folders}
+        tags={tags}
         onReset={handleResetFilters}
       />
 
@@ -158,6 +170,8 @@ export const TasksPage: React.FC = () => {
           onToggleCompletion={handleToggleCompletion}
           onEditTask={handleOpenEditModal}
           onDeleteTask={handleDeleteTask}
+          onSelectTag={handleSelectTag}
+          selectedTagId={selectedTagId}
           onCreateTask={() => handleOpenCreateModal('todo')}
         />
       ) : (
@@ -170,6 +184,8 @@ export const TasksPage: React.FC = () => {
           onToggleCompletion={handleToggleCompletion}
           onEditTask={handleOpenEditModal}
           onDeleteTask={handleDeleteTask}
+          onSelectTag={handleSelectTag}
+          selectedTagId={selectedTagId}
           onCreateTaskInStatus={(status) => handleOpenCreateModal(status)}
         />
       )}
