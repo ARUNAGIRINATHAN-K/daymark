@@ -6,8 +6,10 @@ import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskFilters } from '../components/tasks/TaskFilters';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { TaskList } from '../components/tasks/TaskList';
+import { TaskCompletionDialog } from '../components/tasks/TaskCompletionDialog';
 import { useFolders } from '../hooks/useData';
 import { useTasks } from '../hooks/useTasks';
+import { useTaskCompletionConfirmation } from '../hooks/useTaskCompletionConfirmation';
 import type { Task, TaskPriority, TaskStatus } from '../types';
 import { settingsService } from '../services/settings.service';
 import type { TaskSortBy } from '../schemas/settings.schema';
@@ -36,7 +38,7 @@ export const TasksPage: React.FC = () => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [defaultStatusForNew, setDefaultStatusForNew] = useState<TaskStatus>('todo');
 
-  const { tasks, createTask, updateTask, updateTaskStatus, toggleCompletion, softDeleteTask } =
+  const { tasks, createTask, updateTask, updateTaskStatus, softDeleteTask } =
     useTasks({
       searchQuery: searchQuery.trim() || undefined,
       status: selectedStatus === 'all' ? undefined : selectedStatus,
@@ -44,6 +46,7 @@ export const TasksPage: React.FC = () => {
       folderId: selectedFolderId || undefined,
       sortBy,
     });
+  const completion = useTaskCompletionConfirmation();
 
   const handleCreateTask = async (data: any) => {
     if (editingTask) {
@@ -66,9 +69,13 @@ export const TasksPage: React.FC = () => {
     setIsFormOpen(true);
   };
 
-  const handleToggleCompletion = async (e: React.MouseEvent, task: Task) => {
+  const handleToggleCompletion = async (e: React.ChangeEvent<HTMLInputElement>, task: Task) => {
     e.stopPropagation();
-    await toggleCompletion(task.id);
+    if (task.isCompleted) {
+      completion.requestReopen(task);
+    } else {
+      completion.requestCompletion(task);
+    }
   };
 
   const handleDeleteTask = async (e: React.MouseEvent, task: Task) => {
@@ -164,6 +171,11 @@ export const TasksPage: React.FC = () => {
         <KanbanBoard
           tasks={tasks}
           onUpdateStatus={async (id, status) => {
+            const task = tasks.find((item) => item.id === id);
+            if (status === 'completed' && task && !task.isCompleted) {
+              completion.requestCompletion(task);
+              return;
+            }
             await updateTaskStatus(id, status);
           }}
           onSelectTask={(task) => navigate(`/tasks/${task.id}`)}
@@ -184,6 +196,16 @@ export const TasksPage: React.FC = () => {
         }}
         onSubmit={handleCreateTask}
         defaultFolderId={selectedFolderId}
+      />
+      <TaskCompletionDialog
+        task={completion.task}
+        action={completion.action}
+        isProcessing={completion.isProcessing}
+        error={completion.error}
+        incompleteSubtaskCount={completion.incompleteSubtaskCount}
+        onConfirm={() => void completion.confirm()}
+        onCancel={completion.cancel}
+        onDismissWarning={completion.dismissIncompleteSubtaskWarning}
       />
     </div>
   );

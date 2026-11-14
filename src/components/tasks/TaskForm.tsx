@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Calendar, CheckSquare, Plus, X } from 'lucide-react';
 import { useFolders, useTags } from '../../hooks/useData';
+import { useTaskCompletionConfirmation } from '../../hooks/useTaskCompletionConfirmation';
 import { SubtaskChecklist } from './SubtaskChecklist';
+import { TaskCompletionDialog } from './TaskCompletionDialog';
 import type { CreateTaskInput, Subtask, Task, TaskPriority, TaskStatus, UpdateTaskInput } from '../../types';
 
 interface TaskFormProps {
@@ -23,6 +25,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 }) => {
   const folders = useFolders();
   const tags = useTags();
+  const completion = useTaskCompletionConfirmation();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -34,8 +37,10 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isOpen) setSubmitError(null);
     if (task) {
       setTitle(task.title);
       setDescription(task.description || '');
@@ -109,13 +114,14 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
     try {
       setIsSubmitting(true);
+      setSubmitError(null);
       let parsedDueDate: number | null = null;
       if (dueDateStr) {
         const [yyyy, mm, dd] = dueDateStr.split('-').map(Number);
         parsedDueDate = new Date(yyyy, mm - 1, dd, 12, 0, 0, 0).getTime();
       }
 
-      await onSubmit({
+      const data = {
         title: title.trim(),
         description: description.trim(),
         status,
@@ -124,17 +130,39 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         folderId: folderId || null,
         tagIds,
         subtasks,
-      });
+      };
+
+      if (task && !task.isCompleted && status === 'completed') {
+        completion.requestCompletion(task, async () => {
+          await onSubmit(data);
+          onClose();
+        });
+        return;
+      }
+
+      if (task?.isCompleted && status !== 'completed') {
+        completion.requestReopen(task, async () => {
+          await onSubmit(data);
+          onClose();
+        });
+        return;
+      }
+
+      await onSubmit(data);
 
       onClose();
     } catch (err) {
       console.error('Failed to save task:', err);
+      setSubmitError(
+        err instanceof Error ? err.message : 'Failed to save task. Please try again.'
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
+    <>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
       <div className="w-full max-w-lg max-h-[90vh] flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
         {/* Header */}
@@ -152,6 +180,14 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto space-y-4 py-4 pr-1">
+          {submitError && (
+            <p
+              role="alert"
+              className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300"
+            >
+              {submitError}
+            </p>
+          )}
           {/* Title */}
           <div>
             <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
@@ -342,5 +378,16 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         </form>
       </div>
     </div>
+    <TaskCompletionDialog
+      task={completion.task}
+      action={completion.action}
+      isProcessing={completion.isProcessing}
+      error={completion.error}
+      incompleteSubtaskCount={completion.incompleteSubtaskCount}
+      onConfirm={() => void completion.confirm()}
+      onCancel={completion.cancel}
+      onDismissWarning={completion.dismissIncompleteSubtaskWarning}
+    />
+    </>
   );
 };

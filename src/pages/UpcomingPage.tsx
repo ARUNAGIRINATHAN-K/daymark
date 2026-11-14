@@ -3,8 +3,10 @@ import { format } from 'date-fns';
 import { CalendarDays, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TaskCard } from '../components/tasks/TaskCard';
+import { TaskCompletionDialog } from '../components/tasks/TaskCompletionDialog';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { useTasks } from '../hooks/useTasks';
+import { useTaskCompletionConfirmation } from '../hooks/useTaskCompletionConfirmation';
 import type { Task } from '../types';
 
 export const UpcomingPage: React.FC = () => {
@@ -12,8 +14,9 @@ export const UpcomingPage: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  const { tasks: upcomingTasks, createTask, updateTask, toggleCompletion, softDeleteTask } =
+  const { tasks: upcomingTasks, createTask, updateTask, softDeleteTask } =
     useTasks({ dateFilter: 'upcoming' });
+  const completion = useTaskCompletionConfirmation();
 
   const handleCreateTask = async (data: any) => {
     if (editingTask) {
@@ -24,9 +27,13 @@ export const UpcomingPage: React.FC = () => {
     setEditingTask(null);
   };
 
-  const handleToggleCompletion = async (e: React.MouseEvent, task: Task) => {
+  const handleToggleCompletion = async (e: React.ChangeEvent<HTMLInputElement>, task: Task) => {
     e.stopPropagation();
-    await toggleCompletion(task.id);
+    if (task.isCompleted) {
+      completion.requestReopen(task);
+    } else {
+      completion.requestCompletion(task);
+    }
   };
 
   const handleDeleteTask = async (e: React.MouseEvent, task: Task) => {
@@ -132,6 +139,16 @@ export const UpcomingPage: React.FC = () => {
         }}
         onSubmit={handleCreateTask}
         defaultDueDate={Date.now() + 86400000}
+      />
+      <TaskCompletionDialog
+        task={completion.task}
+        action={completion.action}
+        isProcessing={completion.isProcessing}
+        error={completion.error}
+        incompleteSubtaskCount={completion.incompleteSubtaskCount}
+        onConfirm={() => void completion.confirm()}
+        onCancel={completion.cancel}
+        onDismissWarning={completion.dismissIncompleteSubtaskWarning}
       />
     </div>
   );

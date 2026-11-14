@@ -2,6 +2,46 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@keyframes task-dialog-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes task-dialog-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes task-dialog-enter {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.98); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes task-dialog-exit {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to { opacity: 0; transform: translate(-50%, -50%) scale(0.98); }
+}
+
+.task-completion-overlay[data-state='open'] {
+  animation: task-dialog-fade-in 140ms ease-out;
+}
+
+.task-completion-overlay[data-state='closed'] {
+  animation: task-dialog-fade-out 120ms ease-in;
+}
+
+.task-completion-content[data-state='open'] {
+  animation: task-dialog-enter 160ms ease-out;
+}
+
+.task-completion-content[data-state='closed'] {
+  animation: task-dialog-exit 120ms ease-in;
+}
+
+.task-completion-content {
+  transform: translate(-50%, -50%);
+}
+
 @layer base {
   :root {
     --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;

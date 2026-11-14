@@ -11,16 +11,19 @@ import {
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { SubtaskChecklist } from '../components/tasks/SubtaskChecklist';
+import { TaskCompletionDialog } from '../components/tasks/TaskCompletionDialog';
 import { useFolders, useTags } from '../hooks/useData';
 import { useNote } from '../hooks/useNotes';
 import { useTask, useTasks } from '../hooks/useTasks';
+import { useTaskCompletionConfirmation } from '../hooks/useTaskCompletionConfirmation';
 import type { TaskPriority, TaskStatus } from '../types';
 
 export const TaskDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { task, isLoading } = useTask(id);
-  const { updateTask, toggleCompletion, softDeleteTask } = useTasks();
+  const { updateTask, softDeleteTask } = useTasks();
+  const completion = useTaskCompletionConfirmation();
   const folders = useFolders();
   const tags = useTags();
 
@@ -117,7 +120,14 @@ export const TaskDetailsPage: React.FC = () => {
           <input
             type="checkbox"
             checked={task.isCompleted}
-            onChange={() => toggleCompletion(task.id)}
+            aria-label={task.isCompleted ? `Reopen task "${task.title}"` : `Mark task "${task.title}" as completed`}
+            onChange={() => {
+              if (task.isCompleted) {
+                completion.requestReopen(task);
+              } else {
+                completion.requestCompletion(task);
+              }
+            }}
             className="mt-1 h-5 w-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer dark:border-slate-700 dark:bg-slate-900"
           />
           <div className="flex-1">
@@ -146,7 +156,16 @@ export const TaskDetailsPage: React.FC = () => {
             </label>
             <select
               value={task.status || (task.isCompleted ? 'completed' : 'todo')}
-              onChange={(e) => updateTask(task.id, { status: e.target.value as TaskStatus })}
+              onChange={(e) => {
+                const status = e.target.value as TaskStatus;
+                if (status === 'completed' && !task.isCompleted) {
+                  completion.requestCompletion(task);
+                } else if (status !== 'completed' && task.isCompleted) {
+                  completion.requestReopen(task, () => updateTask(task.id, { status }));
+                } else {
+                  void updateTask(task.id, { status });
+                }
+              }}
               className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-800 outline-none cursor-pointer dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
             >
               <option value="todo">To Do</option>
@@ -268,6 +287,16 @@ export const TaskDetailsPage: React.FC = () => {
           </div>
         )}
       </div>
+      <TaskCompletionDialog
+        task={completion.task}
+        action={completion.action}
+        isProcessing={completion.isProcessing}
+        error={completion.error}
+        incompleteSubtaskCount={completion.incompleteSubtaskCount}
+        onConfirm={() => void completion.confirm()}
+        onCancel={completion.cancel}
+        onDismissWarning={completion.dismissIncompleteSubtaskWarning}
+      />
     </div>
   );
 };
