@@ -37,8 +37,10 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isOpen) setSubmitError(null);
     if (task) {
       setTitle(task.title);
       setDescription(task.description || '');
@@ -112,6 +114,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
     try {
       setIsSubmitting(true);
+      setSubmitError(null);
       let parsedDueDate: number | null = null;
       if (dueDateStr) {
         const [yyyy, mm, dd] = dueDateStr.split('-').map(Number);
@@ -150,6 +153,9 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       onClose();
     } catch (err) {
       console.error('Failed to save task:', err);
+      setSubmitError(
+        err instanceof Error ? err.message : 'Failed to save task. Please try again.'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -174,6 +180,14 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto space-y-4 py-4 pr-1">
+          {submitError && (
+            <p
+              role="alert"
+              className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300"
+            >
+              {submitError}
+            </p>
+          )}
           {/* Title */}
           <div>
             <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
@@ -369,8 +383,10 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       action={completion.action}
       isProcessing={completion.isProcessing}
       error={completion.error}
+      incompleteSubtaskCount={completion.incompleteSubtaskCount}
       onConfirm={() => void completion.confirm()}
       onCancel={completion.cancel}
+      onDismissWarning={completion.dismissIncompleteSubtaskWarning}
     />
     </>
   );

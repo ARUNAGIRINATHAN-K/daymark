@@ -24,6 +24,21 @@ const PRIORITY_RANK: Record<TaskPriority, number> = {
   low: 1,
 };
 
+export class IncompleteSubtasksError extends Error {
+  constructor(readonly incompleteCount: number) {
+    const subtaskLabel = incompleteCount === 1 ? 'subtask' : 'subtasks';
+    super(
+      `Complete all subtasks before marking this task as completed. (${incompleteCount} incomplete ${subtaskLabel}.)`
+    );
+    this.name = 'IncompleteSubtasksError';
+  }
+}
+
+function assertSubtasksCompleted(task: Pick<Task, 'subtasks'>): void {
+  const incompleteCount = task.subtasks?.filter((subtask) => !subtask.isCompleted).length ?? 0;
+  if (incompleteCount > 0) throw new IncompleteSubtasksError(incompleteCount);
+}
+
 export class TasksService {
   /**
    * Helper to get local midnight start/end timestamps
@@ -175,6 +190,9 @@ export class TasksService {
     };
 
     TaskSchema.parse(task);
+    if (task.isCompleted || task.status === 'completed') {
+      assertSubtasksCompleted(task);
+    }
 
     await db.transaction('rw', [db.tasks, db.outbox], async () => {
       await db.tasks.add(task);
@@ -190,57 +208,65 @@ export class TasksService {
    * Update an existing task with status sync, version increment, and outbox logging
    */
   async updateTask(id: UUID, updates: UpdateTaskInput): Promise<Task> {
-    const existing = await db.tasks.get(id);
-    if (!existing) {
-      throw new Error(`Task with ID ${id} not found.`);
-    }
-
-    const now = Date.now();
-    let nextStatus: TaskStatus = updates.status ?? existing.status ?? (existing.isCompleted ? 'completed' : 'todo');
-    let nextIsCompleted: boolean = updates.isCompleted ?? existing.isCompleted;
-    let nextCompletedAt: number | null | undefined = updates.completedAt ?? existing.completedAt;
-
-    // Handle explicit status change
-    if (updates.status !== undefined && updates.status !== existing.status) {
-      if (updates.status === 'completed') {
-        nextIsCompleted = true;
-        nextCompletedAt = now;
-      } else {
-        nextIsCompleted = false;
-        nextCompletedAt = null;
+    return db.transaction('rw', [db.tasks, db.outbox], async () => {
+      const existing = await db.tasks.get(id);
+      if (!existing) {
+        throw new Error(`Task with ID ${id} not found.`);
       }
-    } else if (updates.isCompleted !== undefined && updates.isCompleted !== existing.isCompleted) {
-      // Handle explicit completion toggle
-      if (updates.isCompleted) {
-        nextStatus = 'completed';
-        nextCompletedAt = updates.completedAt ?? now;
-      } else {
-        nextStatus = existing.status === 'completed' ? 'todo' : existing.status ?? 'todo';
-        nextCompletedAt = null;
+
+      const now = Date.now();
+      let nextStatus: TaskStatus =
+        updates.status ?? existing.status ?? (existing.isCompleted ? 'completed' : 'todo');
+      let nextIsCompleted: boolean = updates.isCompleted ?? existing.isCompleted;
+      let nextCompletedAt: number | null | undefined = updates.completedAt ?? existing.completedAt;
+
+      // Handle explicit status change
+      if (updates.status !== undefined && updates.status !== existing.status) {
+        if (updates.status === 'completed') {
+          nextIsCompleted = true;
+          nextCompletedAt = now;
+        } else {
+          nextIsCompleted = false;
+          nextCompletedAt = null;
+        }
+      } else if (updates.isCompleted !== undefined && updates.isCompleted !== existing.isCompleted) {
+        // Handle explicit completion toggle
+        if (updates.isCompleted) {
+          nextStatus = 'completed';
+          nextCompletedAt = updates.completedAt ?? now;
+        } else {
+          nextStatus = existing.status === 'completed' ? 'todo' : existing.status ?? 'todo';
+          nextCompletedAt = null;
+        }
       }
-    }
 
-    const updated: Task = {
-      ...existing,
-      ...updates,
-      status: nextStatus,
-      isCompleted: nextIsCompleted,
-      completedAt: nextCompletedAt,
-      updatedAt: now,
-      version: existing.version + 1,
-      syncStatus: 'pending',
-    };
+      const updated: Task = {
+        ...existing,
+        ...updates,
+        status: nextStatus,
+        isCompleted: nextIsCompleted,
+        completedAt: nextCompletedAt,
+        updatedAt: now,
+        version: existing.version + 1,
+        syncStatus: 'pending',
+      };
 
-    TaskSchema.parse(updated);
+      TaskSchema.parse(updated);
+      if (
+        updates.isCompleted === true ||
+        updates.status === 'completed' ||
+        ((updated.isCompleted || updated.status === 'completed') && updates.subtasks !== undefined)
+      ) {
+        assertSubtasksCompleted(updated);
+      }
 
-    await db.transaction('rw', [db.tasks, db.outbox], async () => {
       await db.tasks.put(updated);
       await db.outbox.add(
         await outboxService.createOperationRecord('task', id, 'update', updates as Record<string, unknown>)
       );
-    });
 
-    return updated;
+      return updated;
+    });
   }
 
   /**

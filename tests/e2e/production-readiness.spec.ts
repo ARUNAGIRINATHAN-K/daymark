@@ -208,6 +208,61 @@ test('confirms task completion offline, supports cancellation, and keeps complet
   await expect(completedTasksStat.locator('p').nth(1)).toHaveText(String(completedBefore));
 });
 
+test('blocks parent completion offline until all subtasks are complete', async ({ page, context }) => {
+  const taskTitle = `Parent task ${Date.now()}`;
+  const subtaskTitle = 'Finish required checklist';
+
+  await page.goto('/');
+  await page.evaluate(async () => {
+    if ('serviceWorker' in navigator) await navigator.serviceWorker.ready;
+  });
+  await page.reload();
+  await page.goto('/tasks');
+  await page.getByRole('button', { name: 'New Task' }).click();
+  await page.getByPlaceholder('e.g. Audit IndexedDB storage & transactions').fill(taskTitle);
+  await page.getByPlaceholder('Add a subtask item...').fill(subtaskTitle);
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
+  await page.getByRole('button', { name: 'Create Task' }).click();
+  await expect(page.getByText(taskTitle, { exact: true })).toBeVisible();
+  await context.setOffline(true);
+
+  const parentCheckbox = page.getByRole('checkbox', {
+    name: `Mark task "${taskTitle}" as completed`,
+  });
+  await parentCheckbox.click();
+  await page.getByRole('button', { name: 'Confirm', exact: true }).click();
+  const confirmationDialog = page.getByRole('dialog', { name: 'Complete this task?' });
+  await expect(confirmationDialog).toBeHidden();
+  const warningDialog = page.getByRole('dialog', { name: 'Subtasks still pending' });
+  await expect(warningDialog).toContainText(
+    'Complete all subtasks before marking this task as completed.'
+  );
+  await expect(warningDialog).toContainText('1 incomplete subtask remaining.');
+  await expect(warningDialog).toContainText('This action will not complete subtasks automatically.');
+  await expect(warningDialog.getByRole('button')).toHaveCount(1);
+  await expect(warningDialog.getByRole('button', { name: 'OK' })).toBeVisible();
+  await warningDialog.getByRole('button', { name: 'OK' }).click();
+  await expect(warningDialog).toBeHidden();
+  await expect(confirmationDialog).toBeHidden();
+  await expect(parentCheckbox).not.toBeChecked();
+
+  await page.getByText(taskTitle, { exact: true }).click();
+  await expect(page.getByRole('heading', { name: taskTitle })).toBeVisible();
+  const subtaskCheckbox = page.getByRole('checkbox', { name: subtaskTitle });
+  await expect(subtaskCheckbox).not.toBeChecked();
+  await subtaskCheckbox.click();
+  await expect(subtaskCheckbox).toBeChecked();
+  await page.getByRole('button', { name: 'Back to All Tasks' }).click();
+
+  await parentCheckbox.click();
+  await page.getByRole('button', { name: 'Confirm', exact: true }).click();
+  await expect(
+    page.getByRole('checkbox', { name: `Reopen task "${taskTitle}"` })
+  ).toBeChecked();
+  await expect(page.getByRole('heading', { name: /Completed Tasks/ })).toBeVisible();
+  await expect(page.getByText(taskTitle, { exact: true })).toBeVisible();
+});
+
 test('creates and saves a note in IndexedDB for offline reload', async ({ page, context }) => {
   await page.goto('/');
   await page.evaluate(async () => {

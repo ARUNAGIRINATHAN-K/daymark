@@ -167,6 +167,104 @@ describe('Master Prompt 05: Task Management & Dashboard Metrics', () => {
       expect((await dashboardService.getMetrics()).completedTasks).toBe(1);
     });
 
+    it('allows completion when every subtask is already complete', async () => {
+      const task = await tasksService.createTask({
+        title: 'All subtasks complete',
+        subtasks: [
+          { id: 'login', title: 'Implement login', isCompleted: true },
+          { id: 'tests', title: 'Add tests', isCompleted: true },
+        ],
+      });
+
+      const completedTask = await tasksService.updateTask(task.id, { isCompleted: true });
+
+      expect(completedTask.isCompleted).toBe(true);
+      expect(completedTask.status).toBe('completed');
+      expect((await dashboardService.getMetrics()).completedTasks).toBe(1);
+    });
+
+    it.each([1, 2])(
+      'rejects completion with %i incomplete subtasks without writing an outbox event',
+      async (incompleteCount) => {
+        const subtasks = Array.from({ length: 3 }, (_, index) => ({
+          id: `subtask-${index}`,
+          title: `Subtask ${index + 1}`,
+          isCompleted: index >= incompleteCount,
+        }));
+        const task = await tasksService.createTask({
+          title: `${incompleteCount} incomplete subtasks`,
+          subtasks,
+        });
+        const subtaskLabel = incompleteCount === 1 ? 'subtask' : 'subtasks';
+
+        await expect(tasksService.updateTask(task.id, { isCompleted: true })).rejects.toThrow(
+          `(${incompleteCount} incomplete ${subtaskLabel}.)`
+        );
+
+        expect(await db.tasks.get(task.id)).toMatchObject({
+          isCompleted: false,
+          status: 'todo',
+          completedAt: null,
+          version: 1,
+        });
+        expect(await db.outbox.where('entityId').equals(task.id).toArray()).toHaveLength(1);
+      }
+    );
+
+    it('allows retrying completion after all subtasks are completed', async () => {
+      const task = await tasksService.createTask({
+        title: 'Retry parent completion',
+        subtasks: [
+          { id: 'first', title: 'First', isCompleted: false },
+          { id: 'second', title: 'Second', isCompleted: false },
+        ],
+      });
+
+      await expect(tasksService.updateTask(task.id, { isCompleted: true })).rejects.toThrow(
+        'Complete all subtasks before marking this task as completed.'
+      );
+      await tasksService.updateTask(task.id, {
+        subtasks: (task.subtasks ?? []).map((subtask) => ({ ...subtask, isCompleted: true })),
+      });
+      const completedTask = await tasksService.updateTask(task.id, { isCompleted: true });
+
+      expect(completedTask.isCompleted).toBe(true);
+      expect(completedTask.subtasks?.every((subtask) => subtask.isCompleted)).toBe(true);
+      expect(await db.outbox.where('entityId').equals(task.id).toArray()).toHaveLength(3);
+    });
+
+    it('serializes subtask edits against parent completion to preserve the invariant', async () => {
+      const task = await tasksService.createTask({
+        title: 'Concurrent parent update',
+        subtasks: [{ id: 'required', title: 'Required work', isCompleted: true }],
+      });
+
+      const results = await Promise.allSettled([
+        tasksService.updateTask(task.id, { isCompleted: true }),
+        tasksService.updateTask(task.id, {
+          subtasks: [{ id: 'required', title: 'Required work', isCompleted: false }],
+        }),
+      ]);
+      const stored = await db.tasks.get(task.id);
+
+      expect(results.filter((result) => result.status === 'rejected')).toHaveLength(1);
+      expect(stored?.isCompleted && stored.subtasks?.some((subtask) => !subtask.isCompleted)).toBe(false);
+      expect(await db.outbox.where('entityId').equals(task.id).toArray()).toHaveLength(2);
+    });
+
+    it('rejects creating an already-completed task with incomplete subtasks', async () => {
+      await expect(
+        tasksService.createTask({
+          title: 'Invalid completed parent',
+          status: 'completed',
+          subtasks: [{ id: 'pending', title: 'Pending work', isCompleted: false }],
+        })
+      ).rejects.toThrow('Complete all subtasks before marking this task as completed.');
+
+      expect(await db.tasks.count()).toBe(0);
+      expect(await db.outbox.count()).toBe(0);
+    });
+
     it('preserves task state and outbox when recording completion fails', async () => {
       const task = await tasksService.createTask({ title: 'Completion transaction failure' });
       const createOperationSpy = vi

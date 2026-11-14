@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { tasksService } from '../services/tasks.service';
+import { IncompleteSubtasksError, tasksService } from '../services/tasks.service';
 import type { Task } from '../types';
 
 export type TaskConfirmationAction = 'complete' | 'reopen';
@@ -15,6 +15,7 @@ export function useTaskCompletionConfirmation() {
   const [request, setRequest] = useState<CompletionRequest | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [incompleteSubtaskCount, setIncompleteSubtaskCount] = useState<number | null>(null);
   const requestRef = useRef<CompletionRequest | null>(null);
   const isProcessingRef = useRef(false);
 
@@ -32,6 +33,7 @@ export function useTaskCompletionConfirmation() {
       const nextRequest = { task, action, callback };
       requestRef.current = nextRequest;
       setError(null);
+      setIncompleteSubtaskCount(null);
       setRequest(nextRequest);
     },
     []
@@ -57,6 +59,11 @@ export function useTaskCompletionConfirmation() {
     requestRef.current = null;
     setRequest(null);
     setError(null);
+    setIncompleteSubtaskCount(null);
+  }, []);
+
+  const dismissIncompleteSubtaskWarning = useCallback(() => {
+    setIncompleteSubtaskCount(null);
   }, []);
 
   const confirm = useCallback(async () => {
@@ -82,10 +89,16 @@ export function useTaskCompletionConfirmation() {
       requestRef.current = null;
       setRequest(null);
     } catch (reason: unknown) {
-      const verb = currentRequest.action === 'complete' ? 'complete' : 'reopen';
-      setError(
-        reason instanceof Error ? reason.message : `Unable to ${verb} this task. Please try again.`
-      );
+      if (reason instanceof IncompleteSubtasksError) {
+        requestRef.current = null;
+        setRequest(null);
+        setIncompleteSubtaskCount(reason.incompleteCount);
+      } else {
+        const verb = currentRequest.action === 'complete' ? 'complete' : 'reopen';
+        setError(
+          reason instanceof Error ? reason.message : `Unable to ${verb} this task. Please try again.`
+        );
+      }
     } finally {
       isProcessingRef.current = false;
       setIsProcessing(false);
@@ -97,9 +110,11 @@ export function useTaskCompletionConfirmation() {
     action: request?.action ?? 'complete',
     isProcessing,
     error,
+    incompleteSubtaskCount,
     requestCompletion,
     requestReopen,
     confirm,
     cancel,
+    dismissIncompleteSubtaskWarning,
   };
 }

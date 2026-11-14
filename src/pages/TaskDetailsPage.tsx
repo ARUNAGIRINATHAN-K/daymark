@@ -292,8 +292,10 @@ export const TaskDetailsPage: React.FC = () => {
         action={completion.action}
         isProcessing={completion.isProcessing}
         error={completion.error}
+        incompleteSubtaskCount={completion.incompleteSubtaskCount}
         onConfirm={() => void completion.confirm()}
         onCancel={completion.cancel}
+        onDismissWarning={completion.dismissIncompleteSubtaskWarning}
       />
     </div>
   );
