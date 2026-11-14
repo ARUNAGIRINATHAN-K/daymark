@@ -13,6 +13,17 @@ Notes, tasks, tags, and daily focus powered by browser IndexedDB. Zero tracking.
 
 ---
 
+<table>
+  <tr>
+    <td><img src="img/1.png" width="100%" alt="Project screen 1"></td>
+    <td><img src="img/2.png" width="100%" alt="Project screen 2"></td>
+  </tr>
+  <tr>
+    <td><img src="img/3.png" width="100%" alt="Project screen 3"></td>
+    <td><img src="img/4.png" width="100%" alt="Project screen 4"></td>
+  </tr>
+</table>
+
 ## ✦ Features
 
 - **100% Offline-First:** Persisted locally in IndexedDB via Dexie (`DaymarkDB`). Full CRUD without network access.
