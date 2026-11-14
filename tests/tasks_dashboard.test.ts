@@ -283,5 +283,110 @@ describe('Master Prompt 05: Task Management & Dashboard Metrics', () => {
       expect(metrics.upcomingDeadlines.length).toBe(1);
       expect(metrics.recentNotes.length).toBe(2);
     });
+
+    it('excludes archived and trashed records and counts upcoming tasks by local calendar date', async () => {
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+      await notesService.createNote({ title: 'Active note' });
+      await notesService.createNote({ title: 'Archived note', isArchived: true });
+      const trashedNote = await notesService.createNote({ title: 'Trashed note' });
+      await notesService.softDeleteNote(trashedNote.id);
+
+      await tasksService.createTask({
+        title: 'Due today',
+        dueDate: startOfToday + 12 * 60 * 60 * 1000,
+      });
+      await tasksService.createTask({
+        title: 'Due within seven days',
+        dueDate: startOfToday + 7 * 86400000 + 12 * 60 * 60 * 1000,
+      });
+      await tasksService.createTask({
+        title: 'Due after seven days',
+        dueDate: startOfToday + 8 * 86400000,
+      });
+      const trashedTask = await tasksService.createTask({ title: 'Trashed task' });
+      await tasksService.softDeleteTask(trashedTask.id);
+
+      const metrics = await dashboardService.getMetrics();
+
+      expect(metrics.totalNotes).toBe(1);
+      expect(metrics.totalTasks).toBe(3);
+      expect(metrics.upcomingDeadlines.map((task) => task.title)).toEqual([
+        'Due today',
+        'Due within seven days',
+      ]);
+    });
+
+    it('reflects task completion and note edits in fresh dashboard metrics', async () => {
+      const task = await tasksService.createTask({ title: 'Update dashboard metrics' });
+      const note = await notesService.createNote({ title: 'Initial dashboard note' });
+
+      const beforeCompletion = await dashboardService.getMetrics();
+      expect(beforeCompletion.pendingTasks).toBe(1);
+      expect(beforeCompletion.completedTasks).toBe(0);
+      expect(beforeCompletion.recentNotes[0].title).toBe('Initial dashboard note');
+
+      await tasksService.toggleCompletion(task.id);
+      await notesService.updateNote(note.id, { title: 'Edited dashboard note' });
+
+      const afterUpdates = await dashboardService.getMetrics();
+      expect(afterUpdates.pendingTasks).toBe(0);
+      expect(afterUpdates.completedTasks).toBe(1);
+      expect(afterUpdates.completionRate).toBe(100);
+      expect(afterUpdates.recentNotes[0].title).toBe('Edited dashboard note');
+    });
+
+    it('builds chart and activity data from actual, non-trashed task timestamps', async () => {
+      const completedTask = await tasksService.createTask({
+        title: 'Completed task',
+        status: 'completed',
+      });
+      const trashedTask = await tasksService.createTask({
+        title: 'Trashed completion',
+        status: 'completed',
+      });
+      await tasksService.softDeleteTask(trashedTask.id);
+
+      const tasks = await db.tasks.toArray();
+      const now = new Date();
+      const performance = dashboardService.getTaskPerformance(tasks, 7, now);
+      const activity = dashboardService.getCompletionActivity(tasks, now);
+      const todayPerformance = performance.find(
+        (point) =>
+          point.date.getFullYear() === now.getFullYear() &&
+          point.date.getMonth() === now.getMonth() &&
+          point.date.getDate() === now.getDate()
+      );
+      const todayActivity = activity.find(
+        (day) =>
+          day.date.getFullYear() === now.getFullYear() &&
+          day.date.getMonth() === now.getMonth() &&
+          day.date.getDate() === now.getDate()
+      );
+
+      expect(todayPerformance).toMatchObject({ created: 1, completed: 1 });
+      expect(activity).toHaveLength(84);
+      expect(todayActivity?.count).toBe(1);
+      expect((await db.tasks.get(completedTask.id))?.isCompleted).toBe(true);
+    });
+
+    it('surfaces archive actions from the currently retained local operations', async () => {
+      const note = await notesService.createNote({ title: 'Reference note' });
+      await notesService.toggleArchive(note.id);
+
+      const operations = await db.outbox.orderBy('timestamp').reverse().toArray();
+      const activity = dashboardService.getRecentActivity(
+        operations,
+        await db.notes.toArray(),
+        await db.tasks.toArray()
+      );
+
+      expect(activity[0]).toMatchObject({
+        title: 'Note archived',
+        itemTitle: 'Reference note',
+        entityId: note.id,
+      });
+    });
   });
 });

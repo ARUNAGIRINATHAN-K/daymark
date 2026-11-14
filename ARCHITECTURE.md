@@ -41,6 +41,12 @@ Routes / pages / components
 
 Plural service modules (`notes.service.ts`, etc.) contain the primary entity logic. Singular modules (`noteService.ts`, etc.) re-export the same service instances as compatibility names; they are not duplicate implementations. `useNotes` and `useTasks` wrap those services and Dexie live queries. In contrast, `useData.ts`, `DashboardPage`, `TrashPage`, and `ConflictDialog` query Dexie directly, and `MarkdownEditor`, list panes, sidebar, dialogs, and pages call services directly. This mixed pattern is an existing design inconsistency, not an architectural boundary that should be changed without a scoped review.
 
+### Dashboard data and visualizations
+
+`DashboardPage` reads notes, tasks, folders, tags, and the 50 newest retained outbox operations through Dexie live-query hooks. `dashboard.service.ts` derives task totals, completion percentage, overdue and next-seven-calendar-day counts, daily created/completed task series, and a 12-week completion map from local entities and their existing timestamps. Trashed records are excluded; archived notes are excluded from recent-note totals. No historical comparison or synthetic activity values are presented. The selected chart range is seven or 30 days.
+
+Recent activity is assembled from currently retained outbox operations so create, update, completion, archive, and trash actions can be identified. The outbox is a synchronization queue, not a durable audit log: acknowledged rows can be cleared, and queued updates can be coalesced. The timeline therefore reflects only operations still available locally and must not be interpreted as a complete activity history. Dashboard calculations and visualizations add no database stores, fields, network dependencies, or remote synchronization behavior.
+
 ## 3. Local Persistence and Offline Behavior
 
 `src/db/database.ts` exports a singleton `DaymarkDatabase`, configured by `src/db/schema.ts` and `src/db/migrations.ts`. Note and task create/update/delete paths commit the entity and an outbox record in one local IndexedDB transaction. Folder and tag service paths use local transactions for their related-record changes. Browser connectivity is observed through `NetworkMonitor` and hook(s), but it does not gate local CRUD.

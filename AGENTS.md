@@ -61,6 +61,8 @@ The React entry point is `src/main.tsx`. `src/App.tsx` declares React Router rou
 
 The plural modules (`notes.service.ts`, `tasks.service.ts`, `folders.service.ts`, `tags.service.ts`) hold primary service implementations. Singular modules (`noteService.ts`, etc.) re-export them for compatibility; they are not separate implementations. Some current hooks/pages/components query Dexie directly. Prefer the existing services or hooks for new data flows and avoid expanding direct database access from presentation code.
 
+The dashboard uses live note, task, folder, tag, and bounded outbox hooks. `dashboard.service.ts` derives statistics and visualizations from current entity timestamps; soft-deleted items are excluded and archived notes are omitted from recent-note totals. The activity timeline can only show operations still retained in the outbox, which is a queue rather than a durable audit log. Do not imply that this timeline is a complete history or add an activity store without a separately approved design.
+
 ## 4. Database access conventions
 
 - Put entity reads/writes and business rules in service modules. Keep React components focused on presentation and user interaction.

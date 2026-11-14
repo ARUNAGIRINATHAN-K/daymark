@@ -54,6 +54,15 @@ export function useOutbox(): SyncOperation[] {
   );
 }
 
+export function useRecentOutboxOperations(): SyncOperation[] {
+  return (
+    useLiveQuery(
+      () => db.outbox.orderBy('timestamp').reverse().limit(50).toArray(),
+      []
+    ) ?? []
+  );
+}
+
 export function usePendingOutboxCount(): number {
   return useLiveQuery(() => db.outbox.filter((op) => !op.synced).count(), []) ?? 0;
 }
