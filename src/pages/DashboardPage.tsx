@@ -16,8 +16,10 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TaskCard } from '../components/tasks/TaskCard';
+import { TaskCompletionDialog } from '../components/tasks/TaskCompletionDialog';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { useFolders, useRecentOutboxOperations, useTags, useTasks } from '../hooks/useData';
+import { useTaskCompletionConfirmation } from '../hooks/useTaskCompletionConfirmation';
 import { useNotes as useLiveNotes } from '../hooks/useNotes';
 import { dashboardService, type DashboardActivity, type TaskPerformancePoint } from '../services/dashboard.service';
 import { notesService } from '../services/notes.service';
@@ -380,6 +382,7 @@ const ActivityTimeline: React.FC<ActivityTimelineProps> = ({ items, onOpen }) =>
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const completion = useTaskCompletionConfirmation();
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [quickCaptureText, setQuickCaptureText] = useState('');
   const [chartDays, setChartDays] = useState<7 | 30>(30);
@@ -704,7 +707,11 @@ export const DashboardPage: React.FC = () => {
                       onClick={() => navigate(`/tasks/${task.id}`)}
                       onToggleCompletion={async (event) => {
                         event.stopPropagation();
-                        await tasksService.toggleCompletion(task.id);
+                        if (task.isCompleted) {
+                          await tasksService.toggleCompletion(task.id);
+                        } else {
+                          completion.requestCompletion(task);
+                        }
                       }}
                       onDelete={async (event) => {
                         event.stopPropagation();
@@ -722,6 +729,13 @@ export const DashboardPage: React.FC = () => {
           isOpen={isTaskFormOpen}
           onClose={() => setIsTaskFormOpen(false)}
           onSubmit={handleCreateTask}
+        />
+        <TaskCompletionDialog
+          task={completion.task}
+          isProcessing={completion.isProcessing}
+          error={completion.error}
+          onConfirm={() => void completion.confirm()}
+          onCancel={completion.cancel}
         />
       </div>
     </div>

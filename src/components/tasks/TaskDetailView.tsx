@@ -12,6 +12,8 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useFolders, useNotes, useTags } from '../../hooks/useData';
+import { TaskCompletionDialog } from './TaskCompletionDialog';
+import { useTaskCompletionConfirmation } from '../../hooks/useTaskCompletionConfirmation';
 import { taskService } from '../../services/taskService';
 import { useAppStore } from '../../store/useAppStore';
 import type { Task, TaskPriority } from '../../types';
@@ -25,6 +27,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task }) => {
   const tags = useTags();
   const notes = useNotes();
   const { setActiveItem } = useAppStore();
+  const completion = useTaskCompletionConfirmation();
 
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || '');
@@ -69,7 +72,11 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task }) => {
   };
 
   const handleToggleCompletion = async () => {
-    await taskService.toggleCompletion(task.id);
+    if (task.isCompleted) {
+      await taskService.toggleCompletion(task.id);
+    } else {
+      completion.requestCompletion(task);
+    }
   };
 
   const handlePriorityChange = async (priority: TaskPriority) => {
@@ -117,6 +124,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task }) => {
   const linkedNote = task.noteId ? notes.find((n) => n.id === task.noteId) : null;
 
   return (
+    <>
     <div className="flex h-full flex-col bg-white dark:bg-slate-950">
       {/* Top Header */}
       <div className="flex items-center justify-between border-b border-slate-200 px-6 py-3.5 dark:border-slate-800">
@@ -349,5 +357,13 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task }) => {
         </div>
       </div>
     </div>
+    <TaskCompletionDialog
+      task={completion.task}
+      isProcessing={completion.isProcessing}
+      error={completion.error}
+      onConfirm={() => void completion.confirm()}
+      onCancel={completion.cancel}
+    />
+    </>
   );
 };

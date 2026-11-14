@@ -3,8 +3,10 @@ import { format } from 'date-fns';
 import { Calendar, CheckCircle2, Clock, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TaskCard } from '../components/tasks/TaskCard';
+import { TaskCompletionDialog } from '../components/tasks/TaskCompletionDialog';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { useTasks } from '../hooks/useTasks';
+import { useTaskCompletionConfirmation } from '../hooks/useTaskCompletionConfirmation';
 import type { Task } from '../types';
 
 export const TodayPage: React.FC = () => {
@@ -16,6 +18,7 @@ export const TodayPage: React.FC = () => {
     useTasks({ dateFilter: 'today' });
 
   const { tasks: overdueTasks } = useTasks({ dateFilter: 'overdue' });
+  const completion = useTaskCompletionConfirmation();
 
   const todayStr = format(new Date(), 'EEEE, MMMM d, yyyy');
 
@@ -30,6 +33,10 @@ export const TodayPage: React.FC = () => {
 
   const handleToggleCompletion = async (e: React.MouseEvent, task: Task) => {
     e.stopPropagation();
+    if (!task.isCompleted) {
+      completion.requestCompletion(task);
+      return;
+    }
     await toggleCompletion(task.id);
   };
 
@@ -180,6 +187,13 @@ export const TodayPage: React.FC = () => {
         }}
         onSubmit={handleCreateTask}
         defaultDueDate={Date.now()}
+      />
+      <TaskCompletionDialog
+        task={completion.task}
+        isProcessing={completion.isProcessing}
+        error={completion.error}
+        onConfirm={() => void completion.confirm()}
+        onCancel={completion.cancel}
       />
     </div>
   );

@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Calendar, CheckSquare, Plus, X } from 'lucide-react';
 import { useFolders, useTags } from '../../hooks/useData';
+import { useTaskCompletionConfirmation } from '../../hooks/useTaskCompletionConfirmation';
 import { SubtaskChecklist } from './SubtaskChecklist';
+import { TaskCompletionDialog } from './TaskCompletionDialog';
 import type { CreateTaskInput, Subtask, Task, TaskPriority, TaskStatus, UpdateTaskInput } from '../../types';
 
 interface TaskFormProps {
@@ -23,6 +25,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 }) => {
   const folders = useFolders();
   const tags = useTags();
+  const completion = useTaskCompletionConfirmation();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -115,7 +118,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         parsedDueDate = new Date(yyyy, mm - 1, dd, 12, 0, 0, 0).getTime();
       }
 
-      await onSubmit({
+      const data = {
         title: title.trim(),
         description: description.trim(),
         status,
@@ -124,7 +127,17 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         folderId: folderId || null,
         tagIds,
         subtasks,
-      });
+      };
+
+      if (task && !task.isCompleted && status === 'completed') {
+        completion.requestCompletion(task, async () => {
+          await onSubmit(data);
+          onClose();
+        });
+        return;
+      }
+
+      await onSubmit(data);
 
       onClose();
     } catch (err) {
@@ -135,6 +148,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   };
 
   return (
+    <>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
       <div className="w-full max-w-lg max-h-[90vh] flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
         {/* Header */}
@@ -342,5 +356,13 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         </form>
       </div>
     </div>
+    <TaskCompletionDialog
+      task={completion.task}
+      isProcessing={completion.isProcessing}
+      error={completion.error}
+      onConfirm={() => void completion.confirm()}
+      onCancel={completion.cancel}
+    />
+    </>
   );
 };

@@ -3,8 +3,10 @@ import { format } from 'date-fns';
 import { CalendarDays, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TaskCard } from '../components/tasks/TaskCard';
+import { TaskCompletionDialog } from '../components/tasks/TaskCompletionDialog';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { useTasks } from '../hooks/useTasks';
+import { useTaskCompletionConfirmation } from '../hooks/useTaskCompletionConfirmation';
 import type { Task } from '../types';
 
 export const UpcomingPage: React.FC = () => {
@@ -14,6 +16,7 @@ export const UpcomingPage: React.FC = () => {
 
   const { tasks: upcomingTasks, createTask, updateTask, toggleCompletion, softDeleteTask } =
     useTasks({ dateFilter: 'upcoming' });
+  const completion = useTaskCompletionConfirmation();
 
   const handleCreateTask = async (data: any) => {
     if (editingTask) {
@@ -26,6 +29,10 @@ export const UpcomingPage: React.FC = () => {
 
   const handleToggleCompletion = async (e: React.MouseEvent, task: Task) => {
     e.stopPropagation();
+    if (!task.isCompleted) {
+      completion.requestCompletion(task);
+      return;
+    }
     await toggleCompletion(task.id);
   };
 
@@ -132,6 +139,13 @@ export const UpcomingPage: React.FC = () => {
         }}
         onSubmit={handleCreateTask}
         defaultDueDate={Date.now() + 86400000}
+      />
+      <TaskCompletionDialog
+        task={completion.task}
+        isProcessing={completion.isProcessing}
+        error={completion.error}
+        onConfirm={() => void completion.confirm()}
+        onCancel={completion.cancel}
       />
     </div>
   );

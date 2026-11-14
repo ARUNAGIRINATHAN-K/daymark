@@ -71,6 +71,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             checked={task.isCompleted}
             onChange={() => {}}
             onClick={onToggleCompletion}
+            aria-label={task.isCompleted ? `Reopen task "${task.title}"` : `Mark task "${task.title}" as completed`}
             className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer dark:border-slate-700 dark:bg-slate-900"
           />
           <div className="min-w-0 flex-1">

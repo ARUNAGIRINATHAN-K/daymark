@@ -6,8 +6,10 @@ import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskFilters } from '../components/tasks/TaskFilters';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { TaskList } from '../components/tasks/TaskList';
+import { TaskCompletionDialog } from '../components/tasks/TaskCompletionDialog';
 import { useFolders } from '../hooks/useData';
 import { useTasks } from '../hooks/useTasks';
+import { useTaskCompletionConfirmation } from '../hooks/useTaskCompletionConfirmation';
 import type { Task, TaskPriority, TaskStatus } from '../types';
 import { settingsService } from '../services/settings.service';
 import type { TaskSortBy } from '../schemas/settings.schema';
@@ -44,6 +46,7 @@ export const TasksPage: React.FC = () => {
       folderId: selectedFolderId || undefined,
       sortBy,
     });
+  const completion = useTaskCompletionConfirmation();
 
   const handleCreateTask = async (data: any) => {
     if (editingTask) {
@@ -68,6 +71,10 @@ export const TasksPage: React.FC = () => {
 
   const handleToggleCompletion = async (e: React.MouseEvent, task: Task) => {
     e.stopPropagation();
+    if (!task.isCompleted) {
+      completion.requestCompletion(task);
+      return;
+    }
     await toggleCompletion(task.id);
   };
 
@@ -164,6 +171,11 @@ export const TasksPage: React.FC = () => {
         <KanbanBoard
           tasks={tasks}
           onUpdateStatus={async (id, status) => {
+            const task = tasks.find((item) => item.id === id);
+            if (status === 'completed' && task && !task.isCompleted) {
+              completion.requestCompletion(task);
+              return;
+            }
             await updateTaskStatus(id, status);
           }}
           onSelectTask={(task) => navigate(`/tasks/${task.id}`)}
@@ -184,6 +196,13 @@ export const TasksPage: React.FC = () => {
         }}
         onSubmit={handleCreateTask}
         defaultFolderId={selectedFolderId}
+      />
+      <TaskCompletionDialog
+        task={completion.task}
+        isProcessing={completion.isProcessing}
+        error={completion.error}
+        onConfirm={() => void completion.confirm()}
+        onCancel={completion.cancel}
       />
     </div>
   );

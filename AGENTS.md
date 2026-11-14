@@ -124,6 +124,7 @@ Existing code has direct database reads in some pages/hooks. Treat that as a kno
 
 - Keep components focused on rendering and interaction. Put business rules and persistence in services.
 - Reuse existing page/component and hook patterns instead of duplicating entity logic.
+- Confirm task completion from task cards, details, Kanban status moves, and edits before calling the existing task update path; keep cancellation write-free and preserve its transactional outbox behavior.
 - Use semantic HTML, explicit accessible names for controls, keyboard-operable interactions, and visible focus states. Existing accessibility is inconsistent, so avoid copying unlabeled controls as a standard.
 - Preserve responsive Tailwind layouts and mobile navigation behavior.
 - Do not introduce a replacement component library or shadcn layer without approval and a concrete need.

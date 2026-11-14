@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import 'fake-indexeddb/auto';
 import { db } from '../src/db/database';
 import { dashboardService } from '../src/services/dashboard.service';
 import { notesService } from '../src/services/notes.service';
 import { tasksService } from '../src/services/tasks.service';
+import { outboxService } from '../src/services/outboxService';
 
 describe('Master Prompt 05: Task Management & Dashboard Metrics', () => {
   beforeEach(async () => {
@@ -133,6 +134,43 @@ describe('Master Prompt 05: Task Management & Dashboard Metrics', () => {
       expect(stored.isCompleted).toBe(true);
       expect(stored.status).toBe('completed');
       expect(stored.completedAt).toBeTypeOf('number');
+    });
+
+    it('completes tasks in All Tasks while excluding them from active-only queries', async () => {
+      const task = await tasksService.createTask({ title: 'Confirm task completion' });
+
+      const completedTask = await tasksService.updateTask(task.id, { isCompleted: true });
+
+      expect(completedTask.status).toBe('completed');
+      expect(completedTask.isCompleted).toBe(true);
+      expect((await tasksService.getTasks()).some((item) => item.id === task.id)).toBe(true);
+      expect(
+        (await tasksService.getTasks({ includeCompleted: false })).some((item) => item.id === task.id)
+      ).toBe(false);
+      expect((await db.outbox.where('entityId').equals(task.id).toArray())).toHaveLength(2);
+      expect((await dashboardService.getMetrics()).completedTasks).toBe(1);
+    });
+
+    it('preserves task state and outbox when recording completion fails', async () => {
+      const task = await tasksService.createTask({ title: 'Completion transaction failure' });
+      const createOperationSpy = vi
+        .spyOn(outboxService, 'createOperationRecord')
+        .mockRejectedValue(new Error('Outbox write failed'));
+
+      try {
+        await expect(tasksService.updateTask(task.id, { isCompleted: true })).rejects.toThrow(
+          'Outbox write failed'
+        );
+      } finally {
+        createOperationSpy.mockRestore();
+      }
+
+      expect(await db.tasks.get(task.id)).toMatchObject({
+        isCompleted: false,
+        status: 'todo',
+        version: 1,
+      });
+      expect(await db.outbox.where('entityId').equals(task.id).toArray()).toHaveLength(1);
     });
   });
 
