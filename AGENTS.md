@@ -61,7 +61,7 @@ The React entry point is `src/main.tsx`. `src/App.tsx` declares React Router rou
 
 The plural modules (`notes.service.ts`, `tasks.service.ts`, `folders.service.ts`, `tags.service.ts`) hold primary service implementations. Singular modules (`noteService.ts`, etc.) re-export them for compatibility; they are not separate implementations. Some current hooks/pages/components query Dexie directly. Prefer the existing services or hooks for new data flows and avoid expanding direct database access from presentation code.
 
-The dashboard uses live note, task, folder, tag, and bounded outbox hooks. `dashboard.service.ts` derives statistics and visualizations from current entity timestamps; soft-deleted items are excluded and archived notes are omitted from recent-note totals. The activity timeline can only show operations still retained in the outbox, which is a queue rather than a durable audit log. Do not imply that this timeline is a complete history or add an activity store without a separately approved design.
+The dashboard uses live note, task, folder, tag, and bounded outbox hooks. `dashboard.service.ts` derives statistics and visualizations from current entity timestamps; soft-deleted items are excluded and archived notes are omitted from recent-note totals. The Productivity Calendar replaces the former contribution map with a navigable monthly calendar of tasks that have due dates; it shows their current status and priority, and `user-preferences:productivity-calendar` controls deadline visibility. The activity timeline can only show operations still retained in the outbox, which is a queue rather than a durable audit log. Do not imply that this timeline is a complete history or add an activity store without a separately approved design.
 
 ## 4. Database access conventions
 
@@ -83,7 +83,7 @@ Existing code has direct database reads in some pages/hooks. Treat that as a kno
 - Keep service mutations offline-capable. Avoid server/network dependencies in local CRUD.
 - Backups use the documented version 1 JSON format. Validate every entity and outbox operation before preview/restore; only export allowlisted entity payload fields and theme/task-sort preferences. Exclude secrets, arbitrary settings, conflict state, remote revision/cursor metadata, and retry/error history.
 - Restore is additive. Require explicit per-record choices for ID duplicates, preserve existing outbox rows, and commit selected entity/outbox/default-sort changes in one Dexie transaction. Keep theme in the existing localStorage key and compensate it if the transaction fails.
-- Theme remains in `daymark_theme` localStorage; default task sort uses `user-preferences:default-task-sort`. Do not add stores or indexes for these preferences.
+- Theme remains in `daymark_theme` localStorage; default task sort uses `user-preferences:default-task-sort`; Productivity Calendar deadline visibility uses `user-preferences:productivity-calendar`. Do not add stores or indexes for these preferences.
 - `seedDatabase` populates a new database with demo records. `seedDatabase({ force: true })` and `resetDatabase` can clear data; do not call them against real user data.
 
 ## 6. Offline-first requirements

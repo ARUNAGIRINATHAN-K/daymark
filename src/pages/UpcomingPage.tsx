@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { format } from 'date-fns';
-import { CalendarDays, Plus } from 'lucide-react';
+import { addDays, format, startOfDay } from 'date-fns';
+import { CalendarDays, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskCompletionDialog } from '../components/tasks/TaskCompletionDialog';
@@ -13,9 +13,12 @@ export const UpcomingPage: React.FC = () => {
   const navigate = useNavigate();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  const { tasks: upcomingTasks, createTask, updateTask, softDeleteTask } =
-    useTasks({ dateFilter: 'upcoming' });
+  const taskFilters = selectedDate
+    ? { scheduledDate: startOfDay(selectedDate).getTime() }
+    : { dateFilter: 'upcoming' as const };
+  const { tasks: scheduledTasks, createTask, updateTask, softDeleteTask } = useTasks(taskFilters);
   const completion = useTaskCompletionConfirmation();
 
   const handleCreateTask = async (data: any) => {
@@ -43,13 +46,35 @@ export const UpcomingPage: React.FC = () => {
     }
   };
 
-  // Group upcoming tasks by formatted date
-  const groupedTasks: Record<string, Task[]> = {};
-  for (const task of upcomingTasks) {
-    const key = task.dueDate ? format(task.dueDate, 'EEEE, MMMM d, yyyy') : 'Later';
-    if (!groupedTasks[key]) groupedTasks[key] = [];
-    groupedTasks[key].push(task);
+  const groupedTasks = new Map<number, Task[]>();
+  if (!selectedDate) {
+    for (const task of scheduledTasks) {
+      if (task.dueDate == null) continue;
+      const key = startOfDay(task.dueDate).getTime();
+      const tasksForDate = groupedTasks.get(key) ?? [];
+      tasksForDate.push(task);
+      groupedTasks.set(key, tasksForDate);
+    }
   }
+
+  const moveSelectedDate = (days: number) => {
+    setSelectedDate(addDays(startOfDay(selectedDate ?? new Date()), days));
+  };
+
+  const renderTaskCard = (task: Task) => (
+    <TaskCard
+      key={task.id}
+      task={task}
+      onClick={() => navigate(`/tasks/${task.id}`)}
+      onToggleCompletion={(e) => handleToggleCompletion(e, task)}
+      onEdit={(e) => {
+        e.stopPropagation();
+        setEditingTask(task);
+        setIsFormOpen(true);
+      }}
+      onDelete={(e) => handleDeleteTask(e, task)}
+    />
+  );
 
   return (
     <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 bg-[var(--color-bg-primary)] text-[var(--color-text-primary)]">
@@ -64,23 +89,94 @@ export const UpcomingPage: React.FC = () => {
             Upcoming
           </h1>
           <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
-            {upcomingTasks.length} tasks scheduled for future dates
+            {selectedDate
+              ? `${scheduledTasks.length} tasks scheduled for ${format(selectedDate, 'MMMM d, yyyy')}`
+              : `${scheduledTasks.length} tasks scheduled for future dates`}
           </p>
         </div>
 
-        <button
-          onClick={() => {
-            setEditingTask(null);
-            setIsFormOpen(true);
-          }}
-          className="flex items-center gap-1.5 rounded-lg bg-[var(--color-accent)] px-3.5 py-2 text-xs font-medium text-white shadow-xs transition hover:bg-[var(--color-accent-hover)] cursor-pointer"
-        >
-          <Plus className="h-4 w-4" />
-          Schedule Task
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              aria-label="Previous day"
+              onClick={() => moveSelectedDate(-1)}
+              className="rounded-lg border border-[var(--color-border-primary)] bg-[var(--color-bg-card)] p-2 text-[var(--color-text-secondary)] transition hover:bg-[var(--color-bg-secondary)]"
+            >
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+            </button>
+            <input
+              type="date"
+              aria-label="Select deadline date"
+              value={selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''}
+              onChange={(event) => {
+                const value = event.target.value;
+                if (!value) {
+                  setSelectedDate(null);
+                  return;
+                }
+                const [year, month, day] = value.split('-').map(Number);
+                setSelectedDate(new Date(year, month - 1, day));
+              }}
+              className="w-[138px] rounded-lg border border-[var(--color-border-primary)] bg-[var(--color-bg-card)] px-2.5 py-2 text-xs text-[var(--color-text-primary)]"
+            />
+            <button
+              type="button"
+              aria-label="Next day"
+              onClick={() => moveSelectedDate(1)}
+              className="rounded-lg border border-[var(--color-border-primary)] bg-[var(--color-bg-card)] p-2 text-[var(--color-text-secondary)] transition hover:bg-[var(--color-bg-secondary)]"
+            >
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedDate(startOfDay(new Date()))}
+              className="rounded-lg px-2.5 py-2 text-xs font-medium text-[var(--color-accent)] hover:bg-[var(--color-bg-secondary)]"
+            >
+              Today
+            </button>
+          </div>
+          {selectedDate && (
+            <button
+              type="button"
+              onClick={() => setSelectedDate(null)}
+              className="rounded-lg border border-[var(--color-border-primary)] bg-[var(--color-bg-card)] px-3.5 py-2 text-xs font-medium text-[var(--color-text-primary)] transition hover:bg-[var(--color-bg-secondary)]"
+            >
+              All upcoming
+            </button>
+          )}
+          <button
+            onClick={() => {
+              setEditingTask(null);
+              setIsFormOpen(true);
+            }}
+            className="flex items-center gap-1.5 rounded-lg bg-[var(--color-accent)] px-3.5 py-2 text-xs font-medium text-white shadow-xs transition hover:bg-[var(--color-accent-hover)] cursor-pointer"
+          >
+            <Plus className="h-4 w-4" />
+            Schedule Task
+          </button>
+        </div>
       </div>
 
-      {upcomingTasks.length === 0 ? (
+      {selectedDate ? (
+        <div className="space-y-3">
+          <h2 className="text-xs font-bold text-slate-700 dark:text-slate-300">
+            Tasks scheduled for {format(selectedDate, 'EEEE, MMMM d, yyyy')} ({scheduledTasks.length})
+          </h2>
+          {scheduledTasks.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-[var(--color-border-primary)] py-12 text-center">
+              <CalendarDays className="mx-auto h-8 w-8 text-[var(--color-text-muted)] opacity-60" />
+              <p className="mt-2 text-xs font-medium text-[var(--color-text-secondary)]">
+                No tasks scheduled for this date.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {scheduledTasks.map(renderTaskCard)}
+            </div>
+          )}
+        </div>
+      ) : scheduledTasks.length === 0 ? (
         <div className="rounded-xl border border-dashed border-[var(--color-border-primary)] py-16 text-center">
           <CalendarDays className="mx-auto h-8 w-8 text-[var(--color-text-muted)] opacity-60" />
           <p className="mt-2 text-xs font-medium text-[var(--color-text-secondary)]">
@@ -102,27 +198,16 @@ export const UpcomingPage: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-6">
-          {Object.entries(groupedTasks).map(([dateGroup, tasksInGroup]) => (
-            <div key={dateGroup} className="space-y-3">
+          {Array.from(groupedTasks.entries())
+            .sort(([firstDate], [secondDate]) => firstDate - secondDate)
+            .map(([date, tasksInGroup]) => (
+            <div key={date} className="space-y-3">
               <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-indigo-500" />
-                {dateGroup} ({tasksInGroup.length})
+                {format(date, 'EEEE, MMMM d, yyyy')} ({tasksInGroup.length})
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {tasksInGroup.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    onClick={() => navigate(`/tasks/${task.id}`)}
-                    onToggleCompletion={(e) => handleToggleCompletion(e, task)}
-                    onEdit={(e) => {
-                      e.stopPropagation();
-                      setEditingTask(task);
-                      setIsFormOpen(true);
-                    }}
-                    onDelete={(e) => handleDeleteTask(e, task)}
-                  />
-                ))}
+                {tasksInGroup.map(renderTaskCard)}
               </div>
             </div>
           ))}

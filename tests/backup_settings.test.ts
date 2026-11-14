@@ -3,7 +3,13 @@ import 'fake-indexeddb/auto';
 import { db } from '../src/db/database';
 import { resetDatabase } from '../src/db/seed';
 import { backupService, BACKUP_FORMAT, BACKUP_VERSION, type DuplicateChoices } from '../src/services/backup.service';
-import { settingsService, DEFAULT_TASK_SORT_SETTING_KEY, THEME_STORAGE_KEY } from '../src/services/settings.service';
+import {
+  DEFAULT_TASK_SORT_SETTING_KEY,
+  DEFAULT_PRODUCTIVITY_CALENDAR_PREFERENCES,
+  PRODUCTIVITY_CALENDAR_SETTING_KEY,
+  settingsService,
+  THEME_STORAGE_KEY,
+} from '../src/services/settings.service';
 import { notesService } from '../src/services/notes.service';
 import { tasksService } from '../src/services/tasks.service';
 import { foldersService } from '../src/services/folders.service';
@@ -188,6 +194,25 @@ describe('backup, restore, and preferences', () => {
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('light');
     await expect(settingsService.setDefaultTaskSort('made-up' as never)).rejects.toThrow();
     expect(await settingsService.getDefaultTaskSort()).toBe('priority');
+  });
+
+  it('persists validated productivity calendar display settings without adding them to backups', async () => {
+    expect(await settingsService.getProductivityCalendarPreferences()).toEqual(
+      DEFAULT_PRODUCTIVITY_CALENDAR_PREFERENCES
+    );
+
+    await settingsService.setProductivityCalendarPreferences({ showDeadlines: false });
+    expect(await settingsService.getProductivityCalendarPreferences()).toEqual({ showDeadlines: false });
+    expect(await db.settings.get(PRODUCTIVITY_CALENDAR_SETTING_KEY)).toMatchObject({
+      value: { showDeadlines: false },
+    });
+
+    await expect(
+      settingsService.setProductivityCalendarPreferences({ showDeadlines: 'false' } as never)
+    ).rejects.toThrow();
+
+    const backupJson = JSON.stringify(await backupService.createBackup());
+    expect(backupJson).not.toContain(PRODUCTIVITY_CALENDAR_SETTING_KEY);
   });
 
   it('restores the allowlisted theme and default task sorting preference', async () => {

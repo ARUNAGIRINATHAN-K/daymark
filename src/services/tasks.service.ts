@@ -10,6 +10,7 @@ export interface TaskFilterOptions {
   folderId?: UUID | null;
   tagId?: UUID | null;
   dateFilter?: 'today' | 'upcoming' | 'overdue';
+  scheduledDate?: number;
   includeCompleted?: boolean;
   includeDeleted?: boolean;
   searchQuery?: string;
@@ -43,10 +44,9 @@ export class TasksService {
   /**
    * Helper to get local midnight start/end timestamps
    */
-  private getLocalDayBounds() {
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0).getTime();
-    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).getTime();
+  private getLocalDayBounds(date = new Date()) {
+    const startOfToday = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0).getTime();
+    const endOfToday = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999).getTime();
     return { startOfToday, endOfToday };
   }
 
@@ -107,6 +107,17 @@ export class TasksService {
           (t) => t.dueDate !== null && t.dueDate !== undefined && t.dueDate > endOfToday
         );
       }
+    }
+
+    if (options.scheduledDate !== undefined) {
+      const { startOfToday, endOfToday } = this.getLocalDayBounds(new Date(options.scheduledDate));
+      collection = collection.filter(
+        (task) =>
+          task.dueDate !== null &&
+          task.dueDate !== undefined &&
+          task.dueDate >= startOfToday &&
+          task.dueDate <= endOfToday
+      );
     }
 
     let results = await collection.toArray();

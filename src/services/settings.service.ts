@@ -1,9 +1,20 @@
 import { db } from '../db/database';
-import { TaskSortBySchema, ThemePreferenceSchema, type TaskSortBy, type ThemePreference } from '../schemas/settings.schema';
+import {
+  ProductivityCalendarPreferencesSchema,
+  TaskSortBySchema,
+  ThemePreferenceSchema,
+  type ProductivityCalendarPreferences,
+  type TaskSortBy,
+  type ThemePreference,
+} from '../schemas/settings.schema';
 
 export const DEFAULT_TASK_SORT_SETTING_KEY = 'user-preferences:default-task-sort';
+export const PRODUCTIVITY_CALENDAR_SETTING_KEY = 'user-preferences:productivity-calendar';
 export const THEME_STORAGE_KEY = 'daymark_theme';
 export const DEFAULT_TASK_SORT: TaskSortBy = 'createdAt';
+export const DEFAULT_PRODUCTIVITY_CALENDAR_PREFERENCES: ProductivityCalendarPreferences = {
+  showDeadlines: true,
+};
 
 export class SettingsService {
   getThemePreference(): ThemePreference {
@@ -32,6 +43,23 @@ export class SettingsService {
     const value = TaskSortBySchema.parse(sortBy);
     const now = Date.now();
     await db.settings.put({ key: DEFAULT_TASK_SORT_SETTING_KEY, value, updatedAt: now });
+  }
+
+  async getProductivityCalendarPreferences(): Promise<ProductivityCalendarPreferences> {
+    const setting = await db.settings.get(PRODUCTIVITY_CALENDAR_SETTING_KEY);
+    const result = ProductivityCalendarPreferencesSchema.safeParse(setting?.value);
+    return result.success ? result.data : DEFAULT_PRODUCTIVITY_CALENDAR_PREFERENCES;
+  }
+
+  async setProductivityCalendarPreferences(
+    preferences: ProductivityCalendarPreferences
+  ): Promise<void> {
+    const value = ProductivityCalendarPreferencesSchema.parse(preferences);
+    await db.settings.put({
+      key: PRODUCTIVITY_CALENDAR_SETTING_KEY,
+      value,
+      updatedAt: Date.now(),
+    });
   }
 }
 
