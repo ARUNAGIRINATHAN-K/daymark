@@ -22,8 +22,15 @@ import { usePWAInstall } from '../hooks/usePWAInstall';
 import { notesService } from '../services/notes.service';
 import { outboxService } from '../services/outboxService';
 import { tasksService } from '../services/tasks.service';
-import { settingsService } from '../services/settings.service';
-import { TaskSortBySchema, type TaskSortBy } from '../schemas/settings.schema';
+import {
+  DEFAULT_PRODUCTIVITY_CALENDAR_PREFERENCES,
+  settingsService,
+} from '../services/settings.service';
+import {
+  TaskSortBySchema,
+  type ProductivityCalendarPreferences,
+  type TaskSortBy,
+} from '../schemas/settings.schema';
 import { useAppStore } from '../store/useAppStore';
 import { getStorageEstimate, type StorageEstimateResult } from '../utils/network.utils';
 
@@ -39,6 +46,11 @@ export const SettingsPage: React.FC = () => {
 
   const [storageEstimate, setStorageEstimate] = useState<StorageEstimateResult | null>(null);
   const [defaultTaskSort, setDefaultTaskSort] = useState<TaskSortBy>('createdAt');
+  const [calendarPreferences, setCalendarPreferences] = useState<ProductivityCalendarPreferences>(
+    DEFAULT_PRODUCTIVITY_CALENDAR_PREFERENCES
+  );
+  const [calendarPreferencesLoaded, setCalendarPreferencesLoaded] = useState(false);
+  const [savingCalendarPreferences, setSavingCalendarPreferences] = useState(false);
   const [preferenceError, setPreferenceError] = useState<string | null>(null);
 
   const refreshStorage = async () => {
@@ -54,6 +66,19 @@ export const SettingsPage: React.FC = () => {
     let active = true;
     void settingsService.getDefaultTaskSort().then((sortBy) => {
       if (active) setDefaultTaskSort(sortBy);
+    }).catch((error: unknown) => {
+      if (active) setPreferenceError(error instanceof Error ? error.message : String(error));
+    });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    void settingsService.getProductivityCalendarPreferences().then((preferences) => {
+      if (active) {
+        setCalendarPreferences(preferences);
+        setCalendarPreferencesLoaded(true);
+      }
     }).catch((error: unknown) => {
       if (active) setPreferenceError(error instanceof Error ? error.message : String(error));
     });
@@ -79,6 +104,20 @@ export const SettingsPage: React.FC = () => {
       setPreferenceError(null);
     } catch (error: unknown) {
       setPreferenceError(error instanceof Error ? error.message : String(error));
+    }
+  };
+
+  const handleShowCalendarDeadlinesChange = async (showDeadlines: boolean) => {
+    const updatedPreferences = { ...calendarPreferences, showDeadlines };
+    setSavingCalendarPreferences(true);
+    try {
+      await settingsService.setProductivityCalendarPreferences(updatedPreferences);
+      setCalendarPreferences(updatedPreferences);
+      setPreferenceError(null);
+    } catch (error: unknown) {
+      setPreferenceError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setSavingCalendarPreferences(false);
     }
   };
 
@@ -157,6 +196,24 @@ export const SettingsPage: React.FC = () => {
               <option value="priority">Priority</option>
               <option value="title">Title</option>
             </select>
+          </div>
+          <div className="mt-4 flex items-center justify-between gap-3 border-t border-[var(--color-border-secondary)] pt-4">
+            <div>
+              <label htmlFor="calendar-show-deadlines" className="text-xs font-medium text-[var(--color-text-primary)]">
+                Show task deadlines on the Productivity Calendar
+              </label>
+              <p className="text-xs text-[var(--color-text-muted)]">
+                Show dated tasks on their due dates, including their current status.
+              </p>
+            </div>
+            <input
+              id="calendar-show-deadlines"
+              type="checkbox"
+              checked={calendarPreferences.showDeadlines}
+              disabled={!calendarPreferencesLoaded || savingCalendarPreferences}
+              onChange={(event) => void handleShowCalendarDeadlinesChange(event.target.checked)}
+              className="h-4 w-4 shrink-0 accent-[var(--color-accent)] disabled:cursor-not-allowed"
+            />
           </div>
           {preferenceError && <p role="alert" className="mt-3 text-xs text-red-700 dark:text-red-300">{preferenceError}</p>}
         </div>

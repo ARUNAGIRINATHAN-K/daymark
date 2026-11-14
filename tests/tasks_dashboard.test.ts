@@ -343,6 +343,49 @@ describe('Master Prompt 05: Task Management & Dashboard Metrics', () => {
       const allTasks = await tasksService.getTasks();
       expect(allTasks.some((t) => t.id === unscheduledTask.id)).toBe(true);
     });
+
+    it('filters scheduled tasks by a selected local date, including completed tasks but excluding undated tasks', async () => {
+      const selectedDate = new Date(2026, 2, 8, 12);
+      const startOfSelectedDate = new Date(
+        selectedDate.getFullYear(),
+        selectedDate.getMonth(),
+        selectedDate.getDate()
+      ).getTime();
+      const endOfSelectedDate =
+        new Date(
+          selectedDate.getFullYear(),
+          selectedDate.getMonth(),
+          selectedDate.getDate() + 1
+        ).getTime() - 1;
+      const beforeDate = await tasksService.createTask({
+        title: 'Due before selected date',
+        dueDate: startOfSelectedDate - 1,
+      });
+      const startsOnDate = await tasksService.createTask({
+        title: 'Due at start of selected date',
+        dueDate: startOfSelectedDate,
+      });
+      const endsOnDate = await tasksService.createTask({
+        title: 'Completed on selected date',
+        dueDate: endOfSelectedDate,
+        status: 'completed',
+      });
+      const afterDate = await tasksService.createTask({
+        title: 'Due after selected date',
+        dueDate: endOfSelectedDate + 1,
+      });
+      const undated = await tasksService.createTask({ title: 'No scheduled date' });
+
+      const scheduledTasks = await tasksService.getTasks({ scheduledDate: startOfSelectedDate });
+
+      expect(scheduledTasks.map((task) => task.id)).toEqual(
+        expect.arrayContaining([startsOnDate.id, endsOnDate.id])
+      );
+      expect(scheduledTasks).toHaveLength(2);
+      expect(scheduledTasks.map((task) => task.id)).not.toEqual(
+        expect.arrayContaining([beforeDate.id, afterDate.id, undated.id])
+      );
+    });
   });
 
   describe('Soft Deletion & Recovery', () => {
@@ -489,7 +532,7 @@ describe('Master Prompt 05: Task Management & Dashboard Metrics', () => {
       expect(afterUpdates.recentNotes[0].title).toBe('Edited dashboard note');
     });
 
-    it('builds chart and activity data from actual, non-trashed task timestamps', async () => {
+    it('builds chart data from actual, non-trashed task timestamps', async () => {
       const completedTask = await tasksService.createTask({
         title: 'Completed task',
         status: 'completed',
@@ -503,24 +546,50 @@ describe('Master Prompt 05: Task Management & Dashboard Metrics', () => {
       const tasks = await db.tasks.toArray();
       const now = new Date();
       const performance = dashboardService.getTaskPerformance(tasks, 7, now);
-      const activity = dashboardService.getCompletionActivity(tasks, now);
       const todayPerformance = performance.find(
         (point) =>
           point.date.getFullYear() === now.getFullYear() &&
           point.date.getMonth() === now.getMonth() &&
           point.date.getDate() === now.getDate()
       );
-      const todayActivity = activity.find(
-        (day) =>
-          day.date.getFullYear() === now.getFullYear() &&
-          day.date.getMonth() === now.getMonth() &&
-          day.date.getDate() === now.getDate()
-      );
 
       expect(todayPerformance).toMatchObject({ created: 1, completed: 1 });
-      expect(activity).toHaveLength(84);
-      expect(todayActivity?.count).toBe(1);
       expect((await db.tasks.get(completedTask.id))?.isCompleted).toBe(true);
+    });
+
+    it('returns unique dated tasks due on the selected local day, including completed tasks', async () => {
+      const selectedDate = new Date(2025, 5, 12);
+      const startOfSelectedDate = selectedDate.getTime();
+      const endOfSelectedDate = new Date(2025, 5, 12, 23, 59, 59, 999).getTime();
+      const dueAtStart = await tasksService.createTask({
+        title: 'Due at start of day',
+        dueDate: startOfSelectedDate,
+      });
+      const dueAtEnd = await tasksService.createTask({
+        title: 'Completed due at end of day',
+        status: 'completed',
+        dueDate: endOfSelectedDate,
+      });
+      const dueNextDay = await tasksService.createTask({
+        title: 'Due next day',
+        dueDate: new Date(2025, 5, 13).getTime(),
+      });
+      const noDeadline = await tasksService.createTask({ title: 'No deadline' });
+      const trashedDueTask = await tasksService.createTask({
+        title: 'Trashed due task',
+        dueDate: startOfSelectedDate,
+      });
+      await tasksService.softDeleteTask(trashedDueTask.id);
+
+      const tasks = await db.tasks.toArray();
+      const dueOnDate = dashboardService.getTasksDueOnDate([...tasks, dueAtStart], selectedDate);
+
+      expect(dueOnDate.map((task) => task.id)).toEqual(
+        expect.arrayContaining([dueAtStart.id, dueAtEnd.id])
+      );
+      expect(dueOnDate.map((task) => task.id)).not.toContain(dueNextDay.id);
+      expect(dueOnDate.map((task) => task.id)).not.toContain(noDeadline.id);
+      expect(dueOnDate.map((task) => task.id)).not.toContain(trashedDueTask.id);
     });
 
     it('surfaces archive actions from the currently retained local operations', async () => {

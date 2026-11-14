@@ -263,6 +263,166 @@ test('blocks parent completion offline until all subtasks are complete', async (
   await expect(page.getByText(taskTitle, { exact: true })).toBeVisible();
 });
 
+test('shows due tasks, status, and saved visibility on the productivity calendar', async ({ page }) => {
+  const taskPrefix = `Productivity calendar ${Date.now()}`;
+  const dates = await page.evaluate(() => {
+    const formatDate = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    const today = new Date();
+    return {
+      today: formatDate(today),
+      todayLabel: new Intl.DateTimeFormat('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      }).format(today),
+      currentMonth: new Intl.DateTimeFormat('en-US', {
+        month: 'long',
+        year: 'numeric',
+      }).format(today),
+      nextMonth: new Intl.DateTimeFormat('en-US', {
+        month: 'long',
+        year: 'numeric',
+      }).format(new Date(today.getFullYear(), today.getMonth() + 1, 1)),
+    };
+  });
+  const pendingTask = `${taskPrefix} high pending`;
+  const completedTask = `${taskPrefix} completed`;
+
+  const createTask = async (title: string, status: string, priority: string) => {
+    await page.goto('/tasks');
+    await page.getByRole('button', { name: 'New Task' }).click();
+    await page.getByPlaceholder('e.g. Audit IndexedDB storage & transactions').fill(title);
+    await page.locator('input[type="date"]').last().fill(dates.today);
+    await page.locator('form select').nth(0).selectOption(status);
+    await page.locator('form select').nth(1).selectOption(priority);
+    await page.getByRole('button', { name: 'Create Task' }).click();
+    await expect(page.getByText(title, { exact: true })).toBeVisible();
+  };
+
+  await createTask(pendingTask, 'todo', 'high');
+  await createTask(completedTask, 'completed', 'medium');
+
+  await page.goto('/settings');
+  const visibilityToggle = page.getByRole('checkbox', {
+    name: 'Show task deadlines on the Productivity Calendar',
+  });
+  await expect(visibilityToggle).toBeEnabled();
+  await expect(visibilityToggle).toBeChecked();
+  await page.goto('/');
+  const visibleCalendar = page
+    .getByRole('heading', { name: 'Productivity calendar', exact: true })
+    .locator('xpath=ancestor::section[1]');
+  const monthHeading = visibleCalendar.getByRole('heading', { level: 3 });
+  await expect(monthHeading).toHaveText(dates.currentMonth);
+  const visibleTodayCell = visibleCalendar.locator(`button[aria-label^="${dates.todayLabel}:"]`);
+  await expect(visibleTodayCell).toHaveAttribute('aria-label', /\d+ tasks? due/);
+  await visibleTodayCell.click();
+  const visiblePopover = page.locator('[role="dialog"]');
+  await expect(visiblePopover.getByText(/\d+ tasks? due/)).toBeVisible();
+  const pendingTaskButton = visiblePopover.getByRole('button', { name: new RegExp(pendingTask) });
+  const completedTaskButton = visiblePopover.getByRole('button', { name: new RegExp(completedTask) });
+  await expect(pendingTaskButton).toBeVisible();
+  await expect(completedTaskButton).toBeVisible();
+  await expect(pendingTaskButton.getByText('High priority', { exact: true })).toBeVisible();
+  await expect(completedTaskButton.getByText('Completed', { exact: true })).toBeVisible();
+
+  await page.keyboard.press('Escape');
+  await visibleCalendar.getByRole('button', { name: 'Next month' }).click();
+  await expect(monthHeading).toHaveText(dates.nextMonth);
+  await visibleCalendar.getByRole('button', { name: 'Previous month' }).click();
+  await expect(monthHeading).toHaveText(dates.currentMonth);
+  await visibleTodayCell.click();
+  await expect(visiblePopover).toBeVisible();
+  await page.locator('h1').click();
+  await expect(visiblePopover).toBeHidden();
+
+  await page.goto('/settings');
+  await visibilityToggle.click();
+  await expect(visibilityToggle).not.toBeChecked();
+  await expect(visibilityToggle).toBeEnabled();
+  await page.goto('/');
+  const hiddenCalendar = page
+    .getByRole('heading', { name: 'Productivity calendar', exact: true })
+    .locator('xpath=ancestor::section[1]');
+  const hiddenTodayCell = hiddenCalendar.locator(`button[aria-label^="${dates.todayLabel}:"]`);
+  await hiddenTodayCell.click();
+  const hiddenPopover = page.locator('[role="dialog"]');
+  await expect(hiddenPopover.getByText(/Task deadlines are hidden/)).toBeVisible();
+  await expect(hiddenPopover.getByText(pendingTask, { exact: true })).toHaveCount(0);
+
+  await page.goto('/settings');
+  await expect(visibilityToggle).not.toBeChecked();
+});
+
+test('navigates deadline dates and shows scheduled, completed, overdue, and priority states', async ({ page }) => {
+  const taskPrefix = `Deadline calendar ${Date.now()}`;
+  const dates = await page.evaluate(() => {
+    const formatDate = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    const today = new Date();
+    return {
+      yesterday: formatDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1)),
+      today: formatDate(today),
+      future: formatDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 3)),
+    };
+  });
+
+  const createTask = async (title: string, dueDate?: string, status?: string, priority?: string) => {
+    await page.goto('/tasks');
+    await page.getByRole('button', { name: 'New Task' }).click();
+    await page.getByPlaceholder('e.g. Audit IndexedDB storage & transactions').fill(title);
+    if (dueDate) await page.locator('input[type="date"]').last().fill(dueDate);
+    const selects = page.locator('form select');
+    if (status) await selects.nth(0).selectOption(status);
+    if (priority) await selects.nth(1).selectOption(priority);
+    await page.getByRole('button', { name: 'Create Task' }).click();
+    await expect(page.getByText(title, { exact: true })).toBeVisible();
+  };
+
+  const futureTask = `${taskPrefix} high pending`;
+  const completedTask = `${taskPrefix} completed`;
+  const overdueTask = `${taskPrefix} overdue`;
+  const undatedTask = `${taskPrefix} no date`;
+  await createTask(futureTask, dates.future, undefined, 'high');
+  await createTask(completedTask, dates.future, 'completed');
+  await createTask(overdueTask, dates.yesterday);
+  await createTask(undatedTask);
+
+  await page.goto('/upcoming');
+  const dateInput = page.getByRole('textbox', { name: 'Select deadline date' });
+  await dateInput.fill(dates.future);
+  await expect(page.getByText(futureTask, { exact: true })).toBeVisible();
+  await expect(page.getByText(completedTask, { exact: true })).toBeVisible();
+  await expect(page.getByText(undatedTask, { exact: true })).toHaveCount(0);
+  await expect(
+    page.getByRole('checkbox', { name: `Reopen task "${completedTask}"` })
+  ).toBeChecked();
+  await expect(
+    page.getByRole('checkbox', { name: `Mark task "${futureTask}" as completed` })
+  ).toBeVisible();
+  await expect(page.getByText('High', { exact: true }).first()).toBeVisible();
+
+  for (let day = 0; day < 4; day += 1) {
+    await page.getByRole('button', { name: 'Previous day' }).click();
+  }
+  await expect(dateInput).toHaveValue(dates.yesterday);
+  await expect(page.getByText(overdueTask, { exact: true })).toBeVisible();
+  await expect(page.getByText(/Overdue/).first()).toBeVisible();
+
+  await page.getByRole('button', { name: 'Today' }).click();
+  await expect(dateInput).toHaveValue(dates.today);
+  await expect(page.getByText(undatedTask, { exact: true })).toHaveCount(0);
+});
+
 test('creates and saves a note in IndexedDB for offline reload', async ({ page, context }) => {
   await page.goto('/');
   await page.evaluate(async () => {

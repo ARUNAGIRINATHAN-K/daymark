@@ -1,4 +1,4 @@
-import { addDays, startOfDay, startOfWeek, subDays } from 'date-fns';
+import { addDays, startOfDay, subDays } from 'date-fns';
 import { db } from '../db/database';
 import type { Note, SyncOperation, Task } from '../types';
 
@@ -19,11 +19,6 @@ export interface TaskPerformancePoint {
   date: Date;
   completed: number;
   created: number;
-}
-
-export interface CompletionActivityDay {
-  date: Date;
-  count: number;
 }
 
 export interface DashboardActivity {
@@ -118,25 +113,20 @@ export class DashboardService {
     });
   }
 
-  getCompletionActivity(tasks: Task[], now = new Date()): CompletionActivityDay[] {
-    const today = startOfDay(now);
-    const firstDay = subDays(startOfWeek(today, { weekStartsOn: 1 }), 77);
-    const activeTasks = tasks.filter((task) => task.deletedAt === null && task.isCompleted);
-    const completedCounts = new Map<number, number>();
-
-    for (const task of activeTasks) {
-      if (task.completedAt == null) continue;
-      const completedDay = startOfDay(task.completedAt).getTime();
-      completedCounts.set(completedDay, (completedCounts.get(completedDay) ?? 0) + 1);
+  getTasksDueOnDate(tasks: Task[], date: Date): Task[] {
+    const selectedDay = startOfDay(date).getTime();
+    const dueTasks = new Map<string, Task>();
+    for (const task of tasks) {
+      if (
+        task.deletedAt !== null ||
+        task.dueDate == null ||
+        startOfDay(task.dueDate).getTime() !== selectedDay
+      ) {
+        continue;
+      }
+      dueTasks.set(task.id, task);
     }
-
-    return Array.from({ length: 84 }, (_, index) => {
-      const date = addDays(firstDay, index);
-      return {
-        date,
-        count: completedCounts.get(date.getTime()) ?? 0,
-      };
-    });
+    return Array.from(dueTasks.values());
   }
 
   getRecentActivity(

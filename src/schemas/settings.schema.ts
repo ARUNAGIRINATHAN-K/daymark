@@ -2,6 +2,9 @@ import { z } from 'zod';
 
 export const ThemePreferenceSchema = z.enum(['dark', 'light']);
 export const TaskSortBySchema = z.enum(['dueDate', 'priority', 'title', 'createdAt']);
+export const ProductivityCalendarPreferencesSchema = z.object({
+  showDeadlines: z.boolean(),
+}).strict();
 
 export const UserPreferencesSchema = z.object({
   theme: ThemePreferenceSchema,
@@ -10,6 +13,7 @@ export const UserPreferencesSchema = z.object({
 
 export type ThemePreference = z.infer<typeof ThemePreferenceSchema>;
 export type TaskSortBy = z.infer<typeof TaskSortBySchema>;
+export type ProductivityCalendarPreferences = z.infer<typeof ProductivityCalendarPreferencesSchema>;
 export type UserPreferences = z.infer<typeof UserPreferencesSchema>;
 
 export const AppSettingSchema = z.object({

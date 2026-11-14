@@ -12,6 +12,7 @@ export function useTasks(options: TaskFilterOptions = {}) {
       options.folderId,
       options.tagId,
       options.dateFilter,
+      options.scheduledDate,
       options.includeCompleted,
       options.includeDeleted,
       options.searchQuery,

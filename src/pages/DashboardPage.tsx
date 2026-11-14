@@ -1,10 +1,26 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { addDays, format, formatDistanceToNowStrict, startOfDay } from 'date-fns';
+import {
+  addMonths,
+  eachDayOfInterval,
+  endOfMonth,
+  endOfWeek,
+  format,
+  formatDistanceToNowStrict,
+  isSameDay,
+  isSameMonth,
+  startOfDay,
+  startOfMonth,
+  startOfWeek,
+  subMonths,
+} from 'date-fns';
+import * as Popover from '@radix-ui/react-popover';
 import {
   AlertCircle,
   Archive,
   ArrowRight,
   CalendarDays,
+  ChevronLeft,
+  ChevronRight,
   CheckCircle2,
   Clock3,
   FileText,
@@ -23,8 +39,18 @@ import { useTaskCompletionConfirmation } from '../hooks/useTaskCompletionConfirm
 import { useNotes as useLiveNotes } from '../hooks/useNotes';
 import { dashboardService, type DashboardActivity, type TaskPerformancePoint } from '../services/dashboard.service';
 import { notesService } from '../services/notes.service';
+import {
+  DEFAULT_PRODUCTIVITY_CALENDAR_PREFERENCES,
+  settingsService,
+} from '../services/settings.service';
+import type { ProductivityCalendarPreferences } from '../schemas/settings.schema';
 import { tasksService } from '../services/tasks.service';
-import type { CreateTaskInput, Tag, UpdateTaskInput } from '../types';
+import type {
+  CreateTaskInput,
+  Tag,
+  Task,
+  UpdateTaskInput,
+} from '../types';
 
 const cardClass =
   'rounded-xl border border-[var(--color-border-primary)] bg-[var(--color-bg-card)] shadow-xs';
@@ -224,98 +250,301 @@ const TaskPerformanceChart: React.FC<TaskPerformanceChartProps> = ({ points, day
   );
 };
 
-interface ProductivityMapProps {
-  days: { date: Date; count: number }[];
-  total: number;
+const getDeadlineStatus = (task: Task, today: Date) => {
+  if (task.isCompleted) {
+    return {
+      label: 'Completed',
+      textClass: 'text-[var(--color-success)]',
+      badgeClass: 'bg-[var(--color-success-subtle)]',
+    };
+  }
+  if (task.dueDate != null && startOfDay(task.dueDate) < today) {
+    return {
+      label: 'Overdue',
+      textClass: 'text-[var(--color-danger)]',
+      badgeClass: 'bg-[var(--color-danger-subtle)]',
+    };
+  }
+  if (task.status === 'in_progress') {
+    return {
+      label: 'In progress',
+      textClass: 'text-sky-700 dark:text-sky-300',
+      badgeClass: 'bg-sky-50 dark:bg-sky-950/40',
+    };
+  }
+  return {
+    label: 'Pending',
+    textClass: 'text-[var(--color-text-secondary)]',
+    badgeClass: 'bg-[var(--color-bg-secondary)]',
+  };
+};
+
+interface ProductivityCalendarProps {
+  tasks: Task[];
   now: Date;
+  showDeadlines: boolean;
+  preferenceError: string | null;
+  onOpenTask: (task: Task) => void;
+  onOpenSettings: () => void;
 }
 
-const ProductivityMap: React.FC<ProductivityMapProps> = ({ days, total, now }) => {
+const ProductivityCalendar: React.FC<ProductivityCalendarProps> = ({
+  tasks,
+  now,
+  showDeadlines,
+  preferenceError,
+  onOpenTask,
+  onOpenSettings,
+}) => {
   const today = startOfDay(now);
-  const weeks = Array.from({ length: 12 }, (_, weekIndex) => days.slice(weekIndex * 7, weekIndex * 7 + 7));
-  const monthLabels = weeks.flatMap((week, index) => {
-    const month = week[0] ? format(week[0].date, 'MMM') : '';
-    const previousMonth = index > 0 && weeks[index - 1][0] ? format(weeks[index - 1][0].date, 'MMM') : '';
-    return month && month !== previousMonth ? [{ index, month }] : [];
-  });
-  const maxCount = Math.max(0, ...days.map((day) => day.count));
-  const level = (count: number) => {
-    if (count === 0) return 0;
-    return Math.min(4, Math.ceil((count / maxCount) * 4));
-  };
-  const levelClasses = [
-    'bg-[var(--color-bg-secondary)]',
-    'bg-[#e6e9ff] dark:bg-[#252c50]',
-    'bg-[#bfc7ff] dark:bg-[#333f85]',
-    'bg-[#8491ff] dark:bg-[#5565d6]',
-    'bg-[var(--color-accent)]',
-  ];
+  const [displayedMonth, setDisplayedMonth] = useState(() => startOfMonth(now));
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const calendarDays = useMemo(() => {
+    const firstDate = startOfWeek(startOfMonth(displayedMonth), { weekStartsOn: 1 });
+    const lastDate = endOfWeek(endOfMonth(displayedMonth), { weekStartsOn: 1 });
+    return eachDayOfInterval({ start: firstDate, end: lastDate });
+  }, [displayedMonth]);
+  const tasksByDate = useMemo(() => {
+    const result = new Map<number, Task[]>();
+    if (showDeadlines) {
+      for (const date of calendarDays) {
+        result.set(startOfDay(date).getTime(), dashboardService.getTasksDueOnDate(tasks, date));
+      }
+    }
+    return result;
+  }, [calendarDays, showDeadlines, tasks]);
+  const monthTaskCount = calendarDays.reduce((count, date) => {
+    if (!isSameMonth(date, displayedMonth)) return count;
+    return count + (tasksByDate.get(startOfDay(date).getTime())?.length ?? 0);
+  }, 0);
 
   return (
-    <section className={`${cardClass} min-w-0 p-4 sm:p-5`}>
-      <div className="flex items-start justify-between gap-3">
+    <section className={`${cardClass} min-w-0 p-3 sm:p-4`}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-accent-subtle)] text-[var(--color-accent)]">
               <CalendarDays className="h-4 w-4" aria-hidden="true" />
             </span>
-            <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">Productivity map</h2>
+            <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">Productivity calendar</h2>
           </div>
-          <p className="mt-1 text-xs text-[var(--color-text-muted)]">Completed tasks · last 12 weeks</p>
+          <p className="mt-1 text-xs text-[var(--color-text-muted)]">Tasks scheduled by due date</p>
         </div>
-        <p className="shrink-0 text-right">
-          <span className="block text-lg font-bold tabular-nums text-[var(--color-text-primary)]">{total}</span>
-          <span className="text-xs text-[var(--color-text-muted)]">in this period</span>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            aria-label="Previous month"
+            onClick={() => {
+              setDisplayedMonth((month) => subMonths(month, 1));
+              setSelectedDate(null);
+            }}
+            className="rounded-md border border-[var(--color-border-primary)] p-1.5 text-[var(--color-text-secondary)] transition hover:bg-[var(--color-bg-secondary)] focus-visible:outline-2 focus-visible:outline-[var(--color-accent)]"
+          >
+            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+          </button>
+          <h3 aria-live="polite" className="min-w-28 text-center text-xs font-semibold text-[var(--color-text-primary)]">
+            {format(displayedMonth, 'MMMM yyyy')}
+          </h3>
+          <button
+            type="button"
+            aria-label="Next month"
+            onClick={() => {
+              setDisplayedMonth((month) => addMonths(month, 1));
+              setSelectedDate(null);
+            }}
+            className="rounded-md border border-[var(--color-border-primary)] p-1.5 text-[var(--color-text-secondary)] transition hover:bg-[var(--color-bg-secondary)] focus-visible:outline-2 focus-visible:outline-[var(--color-accent)]"
+          >
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            aria-label="Go to current month"
+            onClick={() => {
+              setDisplayedMonth(startOfMonth(now));
+              setSelectedDate(null);
+            }}
+            className="ml-1 rounded-md px-2 py-1.5 text-[10px] font-medium text-[var(--color-accent)] transition hover:bg-[var(--color-accent-subtle)] focus-visible:outline-2 focus-visible:outline-[var(--color-accent)]"
+          >
+            Today
+          </button>
+        </div>
+      </div>
+
+      <div
+        className="mt-2 grid grid-cols-7 gap-1 text-center text-[10px] font-medium text-[var(--color-text-muted)]"
+        aria-hidden="true"
+      >
+        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+          <span key={day} className="py-1">{day}</span>
+        ))}
+      </div>
+      <div
+        role="group"
+        aria-label={`${format(displayedMonth, 'MMMM yyyy')} calendar dates`}
+        className="mt-0.5 grid grid-cols-7 gap-0.5"
+      >
+        {calendarDays.map((date) => {
+          const dateKey = startOfDay(date).getTime();
+          const dueTasks = tasksByDate.get(dateKey) ?? [];
+          const isOpen = selectedDate !== null && isSameDay(selectedDate, date);
+          const inDisplayedMonth = isSameMonth(date, displayedMonth);
+          const isToday = isSameDay(date, today);
+          const dateLabel = format(date, 'MMMM d, yyyy');
+          const overdueCount = dueTasks.filter(
+            (task) => !task.isCompleted && task.dueDate != null && startOfDay(task.dueDate) < today
+          ).length;
+          const completedCount = dueTasks.filter((task) => task.isCompleted).length;
+          const hasHighPriorityTask = dueTasks.some(
+            (task) => task.priority === 'high' || task.priority === 'urgent'
+          );
+          const taskCountLabel = `${dueTasks.length} task${dueTasks.length === 1 ? '' : 's'} due`;
+          const dayLabel = showDeadlines
+            ? `${dateLabel}: ${taskCountLabel}${overdueCount > 0 ? `, ${overdueCount} overdue` : ''}${completedCount > 0 ? `, ${completedCount} completed` : ''}${hasHighPriorityTask ? ', includes high priority' : ''}. Click to view tasks.`
+            : `${dateLabel}: task deadlines are hidden in Settings.`;
+          const countClass = overdueCount > 0
+            ? 'text-[var(--color-danger)]'
+            : dueTasks.length > 0 && completedCount === dueTasks.length
+              ? 'text-[var(--color-success)]'
+              : dueTasks.length > 0
+                ? 'text-[var(--color-accent)]'
+                : 'text-[var(--color-text-muted)]';
+
+          return (
+            <Popover.Root
+              key={dateKey}
+              open={isOpen}
+              onOpenChange={(open) => setSelectedDate(open ? date : null)}
+            >
+              <Popover.Trigger asChild>
+                <button
+                  type="button"
+                  title={dayLabel}
+                  aria-label={dayLabel}
+                  aria-pressed={isOpen}
+                  className={`h-7 min-w-0 rounded-md border p-1 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--color-accent)] ${
+                    inDisplayedMonth
+                      ? 'border-[var(--color-border-secondary)]'
+                      : 'border-transparent opacity-50'
+                  } ${
+                    isToday
+                      ? 'bg-[var(--color-accent-subtle)]'
+                      : 'bg-[var(--color-bg-card)] hover:bg-[var(--color-bg-secondary)]'
+                  } ${isOpen ? 'ring-2 ring-[var(--color-accent)]' : ''}`}
+                >
+                  <span className="flex items-center justify-between gap-1">
+                    <span className={`text-[10px] tabular-nums ${isToday ? 'font-bold text-[var(--color-accent)]' : 'text-[var(--color-text-secondary)]'}`}>
+                      {format(date, 'd')}
+                    </span>
+                    {showDeadlines && dueTasks.length > 0 && (
+                      <span className={`min-w-4 rounded-full text-center text-[9px] font-semibold ${countClass}`}>
+                        {dueTasks.length}
+                      </span>
+                    )}
+                  </span>
+                  {showDeadlines && hasHighPriorityTask && (
+                    <span className="sr-only">Includes a high-priority task.</span>
+                  )}
+                </button>
+              </Popover.Trigger>
+              <Popover.Portal>
+                <Popover.Content
+                  side="top"
+                  sideOffset={8}
+                  align="center"
+                  collisionPadding={12}
+                  aria-label={`Tasks due on ${dateLabel}`}
+                  className="z-50 w-72 max-w-[calc(100vw-1.5rem)] rounded-xl border border-[var(--color-border-primary)] bg-[var(--color-bg-card)] p-3 text-[var(--color-text-primary)] shadow-xl outline-none"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="truncate text-sm font-semibold">{format(date, 'EEEE, MMMM d, yyyy')}</h3>
+                      <p className="mt-0.5 text-[10px] text-[var(--color-text-muted)]">
+                        {showDeadlines ? taskCountLabel : 'Deadline display is turned off'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3 max-h-[45vh] overflow-y-auto">
+                    {!showDeadlines ? (
+                      <div>
+                        <p className="text-xs text-[var(--color-text-muted)]">
+                          Task deadlines are hidden. Turn them on in Settings to see scheduled tasks.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={onOpenSettings}
+                          className="mt-2 rounded px-1 py-1 text-xs font-medium text-[var(--color-accent)] hover:bg-[var(--color-accent-subtle)] focus-visible:outline-2 focus-visible:outline-[var(--color-accent)]"
+                        >
+                          Open Settings
+                        </button>
+                      </div>
+                    ) : dueTasks.length === 0 ? (
+                      <p className="text-xs text-[var(--color-text-muted)]">No task deadlines on this date.</p>
+                    ) : (
+                      <ul className="space-y-1">
+                        {dueTasks.map((task) => {
+                          const status = getDeadlineStatus(task, today);
+                          const priorityLabel = `${task.priority.charAt(0).toUpperCase()}${task.priority.slice(1)} priority`;
+                          return (
+                            <li key={task.id}>
+                              <button
+                                type="button"
+                                onClick={() => onOpenTask(task)}
+                                className="w-full rounded-lg px-1.5 py-1.5 text-left hover:bg-[var(--color-bg-secondary)] focus-visible:outline-2 focus-visible:outline-[var(--color-accent)]"
+                              >
+                                <span className="block truncate text-xs font-medium">{task.title}</span>
+                                <span className="mt-1 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-[10px]">
+                                  <span className={task.priority === 'high' || task.priority === 'urgent' ? 'font-semibold text-[var(--color-danger)]' : 'text-[var(--color-text-muted)]'}>
+                                    {priorityLabel}
+                                  </span>
+                                  <span className={status.textClass}>{status.label}</span>
+                                </span>
+                                <span className="mt-0.5 block text-[10px] text-[var(--color-text-muted)]">
+                                  Due {task.dueDate != null ? format(task.dueDate, 'MMM d') : ''}
+                                  {task.isCompleted && task.completedAt != null
+                                    ? ` · Completed ${format(task.completedAt, 'MMM d')}`
+                                    : ''}
+                                </span>
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                </Popover.Content>
+              </Popover.Portal>
+            </Popover.Root>
+          );
+        })}
+      </div>
+
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[10px] text-[var(--color-text-muted)]">
+        <span>
+          {showDeadlines
+            ? `${monthTaskCount} task${monthTaskCount === 1 ? '' : 's'} due this month. Click a date for status and priority.`
+            : 'Task deadlines are hidden by your Settings preference.'}
+        </span>
+        {showDeadlines ? (
+          <div className="flex items-center gap-2" aria-label="Task status legend">
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[var(--color-accent)]" />Pending</span>
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[var(--color-success)]" />Completed</span>
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[var(--color-danger)]" />Overdue</span>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={onOpenSettings}
+            className="font-medium text-[var(--color-accent)] hover:underline focus-visible:outline-2 focus-visible:outline-[var(--color-accent)]"
+          >
+            Change in Settings
+          </button>
+        )}
+      </div>
+      {preferenceError && (
+        <p role="alert" className="mt-2 text-xs text-red-700 dark:text-red-300">
+          Could not load calendar preferences: {preferenceError}. Showing deadlines by default.
         </p>
-      </div>
-
-      <div className="mt-5 grid grid-cols-[26px_minmax(0,1fr)] gap-x-2">
-        <div aria-hidden="true" className="grid grid-rows-7 gap-1 pt-5 text-[9px] text-[var(--color-text-muted)]">
-          {['Mon', '', 'Wed', '', 'Fri', '', ''].map((day, index) => (
-            <span key={index} className="flex items-center">{day}</span>
-          ))}
-        </div>
-        <div className="min-w-0">
-          <div className="grid h-4 grid-cols-12 text-[9px] text-[var(--color-text-muted)]">
-            {monthLabels.map(({ index, month }) => (
-              <span key={`${index}-${month}`} style={{ gridColumnStart: index + 1 }}>
-                {month}
-              </span>
-            ))}
-          </div>
-          <div className="grid grid-flow-col grid-cols-12 grid-rows-7 gap-1">
-            {weeks.flatMap((week, weekIndex) =>
-              Array.from({ length: 7 }, (_, dayIndex) => {
-                const day = week[dayIndex];
-                if (!day || (today && day.date > today)) {
-                  return <span key={`${weekIndex}-${dayIndex}`} aria-hidden="true" />;
-                }
-                const intensity = level(day.count);
-                return (
-                  <span
-                    key={day.date.toISOString()}
-                    role="img"
-                    title={`${format(day.date, 'EEEE, MMMM d')}: ${day.count} completed task${day.count === 1 ? '' : 's'}`}
-                    aria-label={`${format(day.date, 'MMMM d, yyyy')}: ${day.count} completed task${day.count === 1 ? '' : 's'}`}
-                    className={`aspect-square min-w-0 rounded-[3px] ${levelClasses[intensity]}`}
-                  />
-                );
-              })
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-4 flex items-center justify-between gap-3 text-[10px] text-[var(--color-text-muted)]">
-        <span>Each square is a day. Hover for details.</span>
-        <div className="flex shrink-0 items-center gap-1" aria-hidden="true">
-          <span>Less</span>
-          {levelClasses.map((className, index) => (
-            <span key={index} className={`h-2.5 w-2.5 rounded-[2px] ${className}`} />
-          ))}
-          <span>More</span>
-        </div>
-      </div>
+      )}
     </section>
   );
 };
@@ -386,6 +615,10 @@ export const DashboardPage: React.FC = () => {
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [quickCaptureText, setQuickCaptureText] = useState('');
   const [chartDays, setChartDays] = useState<7 | 30>(30);
+  const [calendarPreferences, setCalendarPreferences] = useState<ProductivityCalendarPreferences>(
+    DEFAULT_PRODUCTIVITY_CALENDAR_PREFERENCES
+  );
+  const [calendarPreferenceError, setCalendarPreferenceError] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
   const allNotes = useLiveNotes({ includeArchived: true }).notes;
   const tasks = useTasks();
@@ -398,6 +631,16 @@ export const DashboardPage: React.FC = () => {
     return () => window.clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    void settingsService.getProductivityCalendarPreferences().then((preferences) => {
+      if (active) setCalendarPreferences(preferences);
+    }).catch((error: unknown) => {
+      if (active) setCalendarPreferenceError(error instanceof Error ? error.message : String(error));
+    });
+    return () => { active = false; };
+  }, []);
+
   const metrics = useMemo(
     () => dashboardService.calculateMetrics(allNotes, tasks, now),
     [allNotes, tasks, now]
@@ -405,10 +648,6 @@ export const DashboardPage: React.FC = () => {
   const performance = useMemo(
     () => dashboardService.getTaskPerformance(tasks, chartDays, now),
     [tasks, chartDays, now]
-  );
-  const completionActivity = useMemo(
-    () => dashboardService.getCompletionActivity(tasks, now),
-    [tasks, now]
   );
   const recentActivity = useMemo(
     () => dashboardService.getRecentActivity(recentOperations, allNotes, tasks),
@@ -575,10 +814,13 @@ export const DashboardPage: React.FC = () => {
             days={chartDays}
             onDaysChange={setChartDays}
           />
-          <ProductivityMap
-            days={completionActivity}
-            total={completionActivity.reduce((sum, day) => sum + day.count, 0)}
+          <ProductivityCalendar
+            tasks={tasks}
             now={now}
+            showDeadlines={calendarPreferences.showDeadlines}
+            preferenceError={calendarPreferenceError}
+            onOpenTask={(task) => navigate(`/tasks/${task.id}`)}
+            onOpenSettings={() => navigate('/settings')}
           />
         </section>
 
