@@ -708,7 +708,7 @@ export const DashboardPage: React.FC = () => {
                       onToggleCompletion={async (event) => {
                         event.stopPropagation();
                         if (task.isCompleted) {
-                          await tasksService.toggleCompletion(task.id);
+                          completion.requestReopen(task);
                         } else {
                           completion.requestCompletion(task);
                         }
@@ -732,6 +732,7 @@ export const DashboardPage: React.FC = () => {
         />
         <TaskCompletionDialog
           task={completion.task}
+          action={completion.action}
           isProcessing={completion.isProcessing}
           error={completion.error}
           onConfirm={() => void completion.confirm()}

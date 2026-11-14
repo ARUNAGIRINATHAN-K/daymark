@@ -137,6 +137,14 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         return;
       }
 
+      if (task?.isCompleted && status !== 'completed') {
+        completion.requestReopen(task, async () => {
+          await onSubmit(data);
+          onClose();
+        });
+        return;
+      }
+
       await onSubmit(data);
 
       onClose();
@@ -358,6 +366,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
     </div>
     <TaskCompletionDialog
       task={completion.task}
+      action={completion.action}
       isProcessing={completion.isProcessing}
       error={completion.error}
       onConfirm={() => void completion.confirm()}

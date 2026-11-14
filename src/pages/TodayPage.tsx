@@ -14,7 +14,7 @@ export const TodayPage: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  const { tasks: todayTasks, createTask, updateTask, toggleCompletion, softDeleteTask } =
+  const { tasks: todayTasks, createTask, updateTask, softDeleteTask } =
     useTasks({ dateFilter: 'today' });
 
   const { tasks: overdueTasks } = useTasks({ dateFilter: 'overdue' });
@@ -31,13 +31,13 @@ export const TodayPage: React.FC = () => {
     setEditingTask(null);
   };
 
-  const handleToggleCompletion = async (e: React.MouseEvent, task: Task) => {
+  const handleToggleCompletion = async (e: React.ChangeEvent<HTMLInputElement>, task: Task) => {
     e.stopPropagation();
-    if (!task.isCompleted) {
+    if (task.isCompleted) {
+      completion.requestReopen(task);
+    } else {
       completion.requestCompletion(task);
-      return;
     }
-    await toggleCompletion(task.id);
   };
 
   const handleDeleteTask = async (e: React.MouseEvent, task: Task) => {
@@ -190,6 +190,7 @@ export const TodayPage: React.FC = () => {
       />
       <TaskCompletionDialog
         task={completion.task}
+        action={completion.action}
         isProcessing={completion.isProcessing}
         error={completion.error}
         onConfirm={() => void completion.confirm()}

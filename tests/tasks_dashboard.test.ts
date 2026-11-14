@@ -136,6 +136,22 @@ describe('Master Prompt 05: Task Management & Dashboard Metrics', () => {
       expect(stored.completedAt).toBeTypeOf('number');
     });
 
+    it('reopens a completed task and records the change in the outbox', async () => {
+      const task = await tasksService.createTask({
+        title: 'Reopen with confirmation',
+        status: 'completed',
+      });
+
+      const reopenedTask = await tasksService.updateTask(task.id, { isCompleted: false });
+
+      expect(reopenedTask.status).toBe('todo');
+      expect(reopenedTask.isCompleted).toBe(false);
+      expect(reopenedTask.completedAt).toBeNull();
+      expect((await tasksService.getTasks({ includeCompleted: false })).some((item) => item.id === task.id))
+        .toBe(true);
+      expect(await db.outbox.where('entityId').equals(task.id).toArray()).toHaveLength(2);
+    });
+
     it('completes tasks in All Tasks while excluding them from active-only queries', async () => {
       const task = await tasksService.createTask({ title: 'Confirm task completion' });
 

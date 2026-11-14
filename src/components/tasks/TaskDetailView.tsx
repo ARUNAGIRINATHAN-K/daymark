@@ -73,7 +73,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task }) => {
 
   const handleToggleCompletion = async () => {
     if (task.isCompleted) {
-      await taskService.toggleCompletion(task.id);
+      completion.requestReopen(task);
     } else {
       completion.requestCompletion(task);
     }
@@ -359,6 +359,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task }) => {
     </div>
     <TaskCompletionDialog
       task={completion.task}
+      action={completion.action}
       isProcessing={completion.isProcessing}
       error={completion.error}
       onConfirm={() => void completion.confirm()}

@@ -2,11 +2,13 @@ import { useCallback, useRef, useState } from 'react';
 import { tasksService } from '../services/tasks.service';
 import type { Task } from '../types';
 
-type CompletionAction = () => Promise<unknown>;
+export type TaskConfirmationAction = 'complete' | 'reopen';
+type ConfirmationCallback = () => Promise<unknown>;
 
 interface CompletionRequest {
   task: Task;
-  action?: CompletionAction;
+  action: TaskConfirmationAction;
+  callback?: ConfirmationCallback;
 }
 
 export function useTaskCompletionConfirmation() {
@@ -16,14 +18,38 @@ export function useTaskCompletionConfirmation() {
   const requestRef = useRef<CompletionRequest | null>(null);
   const isProcessingRef = useRef(false);
 
-  const requestCompletion = useCallback((task: Task, action?: CompletionAction) => {
-    if (task.isCompleted || requestRef.current || isProcessingRef.current) return;
+  const requestConfirmation = useCallback(
+    (task: Task, action: TaskConfirmationAction, callback?: ConfirmationCallback) => {
+      const targetIsCompleted = action === 'complete';
+      if (
+        task.isCompleted === targetIsCompleted ||
+        requestRef.current ||
+        isProcessingRef.current
+      ) {
+        return;
+      }
 
-    const nextRequest = { task, action };
-    requestRef.current = nextRequest;
-    setError(null);
-    setRequest(nextRequest);
-  }, []);
+      const nextRequest = { task, action, callback };
+      requestRef.current = nextRequest;
+      setError(null);
+      setRequest(nextRequest);
+    },
+    []
+  );
+
+  const requestCompletion = useCallback(
+    (task: Task, callback?: ConfirmationCallback) => {
+      requestConfirmation(task, 'complete', callback);
+    },
+    [requestConfirmation]
+  );
+
+  const requestReopen = useCallback(
+    (task: Task, callback?: ConfirmationCallback) => {
+      requestConfirmation(task, 'reopen', callback);
+    },
+    [requestConfirmation]
+  );
 
   const cancel = useCallback(() => {
     if (isProcessingRef.current) return;
@@ -42,20 +68,24 @@ export function useTaskCompletionConfirmation() {
     setError(null);
 
     try {
-      if (currentRequest.action) {
-        await currentRequest.action();
+      if (currentRequest.callback) {
+        await currentRequest.callback();
       } else {
         const latestTask = await tasksService.getTaskById(currentRequest.task.id);
         if (!latestTask) throw new Error('This task is no longer available.');
-        if (!latestTask.isCompleted) {
-          await tasksService.updateTask(latestTask.id, { isCompleted: true });
+        const shouldBeCompleted = currentRequest.action === 'complete';
+        if (latestTask.isCompleted !== shouldBeCompleted) {
+          await tasksService.updateTask(latestTask.id, { isCompleted: shouldBeCompleted });
         }
       }
 
       requestRef.current = null;
       setRequest(null);
     } catch (reason: unknown) {
-      setError(reason instanceof Error ? reason.message : 'Unable to complete this task. Please try again.');
+      const verb = currentRequest.action === 'complete' ? 'complete' : 'reopen';
+      setError(
+        reason instanceof Error ? reason.message : `Unable to ${verb} this task. Please try again.`
+      );
     } finally {
       isProcessingRef.current = false;
       setIsProcessing(false);
@@ -64,9 +94,11 @@ export function useTaskCompletionConfirmation() {
 
   return {
     task: request?.task ?? null,
+    action: request?.action ?? 'complete',
     isProcessing,
     error,
     requestCompletion,
+    requestReopen,
     confirm,
     cancel,
   };

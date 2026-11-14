@@ -8,7 +8,7 @@ import { formatExactTimestamp, formatShortDate } from '../../utils/date.utils';
 interface TaskCardProps {
   task: Task;
   onClick?: () => void;
-  onToggleCompletion: (e: React.MouseEvent) => void;
+  onToggleCompletion: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onEdit?: (e: React.MouseEvent) => void;
   onDelete: (e: React.MouseEvent) => void;
 }
@@ -69,8 +69,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           <input
             type="checkbox"
             checked={task.isCompleted}
-            onChange={() => {}}
-            onClick={onToggleCompletion}
+            onClick={(event) => event.stopPropagation()}
+            onChange={onToggleCompletion}
             aria-label={task.isCompleted ? `Reopen task "${task.title}"` : `Mark task "${task.title}" as completed`}
             className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer dark:border-slate-700 dark:bg-slate-900"
           />

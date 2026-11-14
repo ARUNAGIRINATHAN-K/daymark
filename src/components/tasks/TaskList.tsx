@@ -6,7 +6,7 @@ import type { Task } from '../../types';
 export interface TaskListProps {
   tasks: Task[];
   onSelectTask?: (task: Task) => void;
-  onToggleCompletion: (e: React.MouseEvent, task: Task) => void;
+  onToggleCompletion: (e: React.ChangeEvent<HTMLInputElement>, task: Task) => void;
   onEditTask?: (e: React.MouseEvent, task: Task) => void;
   onDeleteTask: (e: React.MouseEvent, task: Task) => void;
   onCreateTask?: () => void;

@@ -7,7 +7,7 @@ export interface KanbanBoardProps {
   tasks: Task[];
   onUpdateStatus: (taskId: string, newStatus: TaskStatus) => Promise<void>;
   onSelectTask?: (task: Task) => void;
-  onToggleCompletion: (e: React.MouseEvent, task: Task) => void;
+  onToggleCompletion: (e: React.ChangeEvent<HTMLInputElement>, task: Task) => void;
   onEditTask?: (e: React.MouseEvent, task: Task) => void;
   onDeleteTask: (e: React.MouseEvent, task: Task) => void;
   onCreateTaskInStatus?: (status: TaskStatus) => void;

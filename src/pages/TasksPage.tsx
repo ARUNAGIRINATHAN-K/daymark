@@ -38,7 +38,7 @@ export const TasksPage: React.FC = () => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [defaultStatusForNew, setDefaultStatusForNew] = useState<TaskStatus>('todo');
 
-  const { tasks, createTask, updateTask, updateTaskStatus, toggleCompletion, softDeleteTask } =
+  const { tasks, createTask, updateTask, updateTaskStatus, softDeleteTask } =
     useTasks({
       searchQuery: searchQuery.trim() || undefined,
       status: selectedStatus === 'all' ? undefined : selectedStatus,
@@ -69,13 +69,13 @@ export const TasksPage: React.FC = () => {
     setIsFormOpen(true);
   };
 
-  const handleToggleCompletion = async (e: React.MouseEvent, task: Task) => {
+  const handleToggleCompletion = async (e: React.ChangeEvent<HTMLInputElement>, task: Task) => {
     e.stopPropagation();
-    if (!task.isCompleted) {
+    if (task.isCompleted) {
+      completion.requestReopen(task);
+    } else {
       completion.requestCompletion(task);
-      return;
     }
-    await toggleCompletion(task.id);
   };
 
   const handleDeleteTask = async (e: React.MouseEvent, task: Task) => {
@@ -199,6 +199,7 @@ export const TasksPage: React.FC = () => {
       />
       <TaskCompletionDialog
         task={completion.task}
+        action={completion.action}
         isProcessing={completion.isProcessing}
         error={completion.error}
         onConfirm={() => void completion.confirm()}

@@ -22,7 +22,7 @@ export const TaskDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { task, isLoading } = useTask(id);
-  const { updateTask, toggleCompletion, softDeleteTask } = useTasks();
+  const { updateTask, softDeleteTask } = useTasks();
   const completion = useTaskCompletionConfirmation();
   const folders = useFolders();
   const tags = useTags();
@@ -123,7 +123,7 @@ export const TaskDetailsPage: React.FC = () => {
             aria-label={task.isCompleted ? `Reopen task "${task.title}"` : `Mark task "${task.title}" as completed`}
             onChange={() => {
               if (task.isCompleted) {
-                void toggleCompletion(task.id);
+                completion.requestReopen(task);
               } else {
                 completion.requestCompletion(task);
               }
@@ -160,6 +160,8 @@ export const TaskDetailsPage: React.FC = () => {
                 const status = e.target.value as TaskStatus;
                 if (status === 'completed' && !task.isCompleted) {
                   completion.requestCompletion(task);
+                } else if (status !== 'completed' && task.isCompleted) {
+                  completion.requestReopen(task, () => updateTask(task.id, { status }));
                 } else {
                   void updateTask(task.id, { status });
                 }
@@ -287,6 +289,7 @@ export const TaskDetailsPage: React.FC = () => {
       </div>
       <TaskCompletionDialog
         task={completion.task}
+        action={completion.action}
         isProcessing={completion.isProcessing}
         error={completion.error}
         onConfirm={() => void completion.confirm()}
